@@ -1,2 +1,11 @@
 /* For information on how to create your own theme, please refer to:
 http://ionicframework.com/docs/theming/ */
+ion-page {
+  --background: #f4f4f4;
+}
+page-home { 
+  ion-content {
+    --background: #3880ff;
+  }
+}
+
