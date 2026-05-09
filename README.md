@@ -5,6 +5,41 @@
 - Isidora Osorio
 - Benjamin Muñoz
 
+## Ejecución del proyecto
+Antes de ejecutar el proyecto es necesario contar con:
+- Node.js
+- Ionic
+- opcionalmente git
+
+### Paso 1
+Primero se debe clonar, si es que se tiene git, o descargar el proyecto.
+Si se utiliza git se debera introducir el siguiente comando:
+
+```bash
+git clone <url_repositorio>
+```
+
+### Paso 2
+Ahora se deben introducir los siguientes comandos:
+```bash
+cd .\my_app\
+npm install
+```
+Si esta teniendo problemas puede ser porque existen conflictos con la versión de vite, para resolverlo utilize el siguiente comando:
+```bash
+npm install --legacy-peer-deps
+```
+
+### Paso 3
+Para ejecutra el servidor local utilize:
+```bash
+npm run dev
+```
+o
+```bash
+ionic serve
+```
+
 ## Requerimientos
 
 ### Funcionales
@@ -186,6 +221,3 @@ La UI es adaptativa (Responsive Design) empleando el sistema de grillas de Ionic
 * **Usabilidad y Rendimiento:** Componentes nativos como IonHeader, IonContent e IonItem aseguran tiempos de respuesta ágiles y patrones de interacción familiares (iOS/Android).
 
 * **Claridad Estructural:** La separación lógica de directorios (/app vs /admin) en el frontend reduce el acoplamiento y facilita el mantenimiento concurrente por el equipo.
-
-* **Escalabilidad:** React Router modularizado permite inyectar futuros roles (ej. Auditor) sin quebrar la lógica ni la seguridad de los roles preexistentes.
-##

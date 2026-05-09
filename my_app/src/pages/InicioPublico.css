@@ -1,0 +1,161 @@
+/* Definición de la fuente principal */
+.dashboard-content {
+  --background: #f4f6f9; 
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Títulos con estilo elegante */
+h2, h5, .header-links span {
+  font-family: 'Roboto Slab', serif;
+}
+
+/* SECCIÓN AZUL SUPERIOR (Contenedor de Filtros) */
+.filters-section-container {
+  background-color: #15305b; /* Azul profundo del diseño */
+  padding: 20px 30px 120px 30px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  /* Curva pronunciada solo en la esquina inferior derecha como en Variante 1 (Administrador).png */
+  border-bottom-right-radius: 80px; 
+}
+
+/* ESTILO DE LOS SELECTORES (TIPO PÍLDORA) */
+ion-select {
+  --placeholder-color: #15305b;
+  --placeholder-opacity: 1;
+  background: white;
+  color: #15305b;
+  font-weight: 600;
+  font-size: 14px;
+  height: 45px;
+  min-width: 130px;
+  border-radius: 25px !important; /* Estilo redondeado total */
+  border: 1px solid #ced4da;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  margin-top: 8px;
+}
+
+/* Ajuste de la flecha del selector */
+ion-select::part(icon) {
+  color: #333;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* BOTONES CIRCULARES DE USUARIO Y COMPARTIR */
+.user-action-button {
+  width: 48px;
+  height: 48px;
+  --border-radius: 50%;
+  --background: #ffffff;
+  --box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  margin: 0;
+}
+
+.user-action-button ion-icon {
+  color: #15305b;
+  font-size: 24px;
+}
+
+/* EL GRID QUE FLOTA SOBRE EL AZUL */
+.main-grid {
+  margin-top: -85px; /* Sube las cards sobre el fondo azul */
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+/* ESTILO DE LAS TARJETAS (CARDS) */
+ion-card {
+  border-radius: 16px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+  border: none;
+  background: white;
+}
+
+.chart-header h2 {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* BARRA DE BÚSQUEDA (ESTILO PÍLDORA) */
+ion-searchbar {
+  --border-radius: 30px !important;
+  --background: white;
+  --box-shadow: none;
+  border: 1px solid #ddd;
+  border-radius: 30px;
+  padding: 0;
+}
+
+/* BOTONES DE ACCIÓN (MES, DESCARGAR, EXPANDIR) */
+.action-button-outline {
+  --border-radius: 25px;
+  --border-color: #ddd;
+  --background: white;
+  --color: #333;
+  font-weight: 500;
+  text-transform: none;
+  height: 42px;
+}
+
+/* LISTA DE ARCHIVOS */
+.file-list-card {
+  border: 1px solid #eee;
+  box-shadow: none !important;
+}
+
+ion-item {
+  --padding-start: 20px;
+  --inner-padding-end: 20px;
+  --border-color: #f2f2f2;
+  --min-height: 60px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #444;
+}
+
+ion-item:hover {
+  --background: #f9f9f9;
+}
+
+/* AJUSTES DE IMÁGENES */
+.pie-chart-img {
+  width: 100%;
+  max-width: 380px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* BARRA SUPERIOR DE ENLACES */
+.header-links span {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.header-links span:hover {
+  opacity: 1;
+  color: #f1c40f;
+  transform: translateY(-1px);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .filters-section-container {
+    flex-direction: column;
+    padding-bottom: 100px;
+    border-bottom-right-radius: 40px;
+  }
+  
+  .main-grid {
+    margin-top: -60px;
+  }
+  
+  .header-links {
+    display: none !important;
+  }
+}

@@ -7,6 +7,9 @@ import { IonReactRouter } from '@ionic/react-router';
 import Login from './pages/Login';
 import Registro from './pages/Registro';
 import InicioPublico from './pages/InicioPublico';
+import GraficoAmpliado from './pages/GraficoAmpliado';
+import DetalleArchivo from './pages/DetalleArchivo';
+import ListaArchivoAmpliada from './pages/ListaArchivoAmpliada';
 
 // 2. PÁGINAS ÁREA PRIVADA (CIUDADANO - /app)
 import AppInicio from './pages/AppInicio';
@@ -47,10 +50,16 @@ const App: React.FC = () => {
         <IonRouterOutlet>
           
           {/*RAÍZ PÚBLICA*/}
-          <Route exact path="/inicio" component={InicioPublico} />    
-          <Route exact path="/login" component={Login} />
+          <Route exact path="/inicio" render={() => <InicioPublico userRole={isAuth ? userRole : null} />} />
+   
+          <Route exact path="/login" render={() => (
+            <Login onLogin={(role) => { setIsAuth(true); setUserRole(role); }} />
+          )} />
+          <Route exact path="/lista-ampliada" component={ListaArchivoAmpliada} />
           <Route exact path="/registro" component={Registro} />
-
+          <Route exact path="/detalle-archivo" component={DetalleArchivo} />
+          <Route exact path="/grafico-ampliado" component={GraficoAmpliado} />
+          
           {/*ÁREA PRIVADA - ROL CIUDADANO (/app) */}
           <PrivateRoute exact path="/app/inicio" component={AppInicio} isAuthenticated={isAuth} />
           <PrivateRoute exact path="/app/solicitudes" component={AppSolicitudes} isAuthenticated={isAuth} />
