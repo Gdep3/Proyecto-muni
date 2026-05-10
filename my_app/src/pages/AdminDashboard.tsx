@@ -1,94 +1,131 @@
 import React from 'react';
-import { 
-  IonPage, 
-  IonHeader, 
-  IonToolbar, 
-  IonContent,
-  IonButtons,
-  IonButton
+import {
+  IonPage, IonContent, IonButton, IonIcon,
 } from '@ionic/react';
+import {
+  personOutline, documentTextOutline, peopleOutline,
+  checkmarkCircleOutline, timeOutline, trendingUpOutline,
+} from 'ionicons/icons';
+import { useHistory } from 'react-router-dom';
+import HeaderLinks from '../components/HeaderLink';
 
+/* ─── Componente ───────────────────────────────────────────────── */
 const AdminDashboard: React.FC = () => {
+  const history = useHistory();
+
+  const kpis = [
+    { label: 'Solicitudes Totales', valor: '154', color: '#1a9cd8', icon: documentTextOutline },
+    { label: 'Pendientes de Revisión', valor: '28', color: '#f0a500', icon: timeOutline },
+    { label: 'Tasa de Respuesta', valor: '94.2%', color: '#27ae60', icon: trendingUpOutline },
+  ];
+
+  const accesos = [
+    {
+      titulo: 'Bandeja de Requerimientos',
+      desc: 'Revisar, clasificar y responder las solicitudes de información ciudadana.',
+      ruta: '/admin/gestion',
+      label: 'Ir a Gestión',
+      color: '#15305b',
+    },
+    {
+      titulo: 'Mantenedor de Cuentas',
+      desc: 'Administración de perfiles de usuarios y niveles de privilegios.',
+      ruta: '/admin/usuarios',
+      label: 'Gestionar Usuarios',
+      color: '#1a9cd8',
+    },
+  ];
+
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        {/* Usamos el color oscuro para denotar el área administrativa/gestión */}
-        <IonToolbar style={{ '--background': '#343a40', '--color': '#ffffff' }}>
-          <div className="container mt-2 mb-2">
-            <h5 style={{ fontFamily: "'Roboto Slab', serif", margin: 0, fontWeight: 'bold' }}>
+      {/* ── BARRA SUPERIOR ── */}
+      <HeaderLinks />
+
+      <IonContent style={{ '--background': '#f0f2f5' }}>
+
+        {/* ── FRANJA AZUL ── */}
+        <div style={{
+          backgroundColor: '#15305b', padding: '28px 30px 100px 30px',
+          color: 'white', display: 'flex', justifyContent: 'space-between',
+          alignItems: 'flex-start', borderBottomRightRadius: '80px',
+        }}>
+          <div>
+            <h2 style={{ margin: 0, fontWeight: '700', fontSize: '20px' }}>
               Panel de Control Administrativo
-            </h5>
-            <small style={{ fontFamily: "'Roboto', sans-serif", color: '#adb5bd' }}>
-              Gestión Interna - Santo Domingo
-            </small>
+            </h2>
+            <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.65)', fontSize: '13px' }}>
+              Gestión Interna — Municipalidad de Santo Domingo
+            </p>
           </div>
-          <IonButtons slot="end">
-            <IonButton routerLink="/login" style={{ color: '#ffffff' }}>Salir</IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <IonButton color="light" routerLink="/login" style={{
+              '--border-radius': '12px', '--box-shadow': 'none',
+              fontWeight: '600', fontSize: '13px', height: '42px',
+            }}>
+              Cerrar sesión
+            </IonButton>
+            <IonButton color="light" style={{
+              width: '48px', height: '48px', '--border-radius': '50%',
+              '--padding-start': '0', '--padding-end': '0',
+            }}>
+              <IonIcon icon={personOutline} style={{ color: '#15305b', fontSize: '22px' }} />
+            </IonButton>
+          </div>
+        </div>
 
-      <IonContent className="ion-padding" style={{ '--background': '#f8f9fa' }}>
-        <div className="container mt-4 mb-5">
-          <div className="row mb-4">
-            <div className="col-12">
-              <h3 style={{ fontFamily: "'Roboto Slab', serif", color: '#333' }}>Métricas de Gestión</h3>
-            </div>
+        {/* ── CONTENIDO ── */}
+        <div style={{ marginTop: '-70px', padding: '0 24px 40px 24px' }}>
+
+          {/* KPIs */}
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
+            {kpis.map((k) => (
+              <div key={k.label} style={{
+                flex: '1 1 180px', backgroundColor: 'white', borderRadius: '16px',
+                padding: '20px 24px', boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+                display: 'flex', alignItems: 'center', gap: '16px',
+              }}>
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '12px',
+                  backgroundColor: `${k.color}18`, display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <IonIcon icon={k.icon} style={{ color: k.color, fontSize: '24px' }} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#888', fontWeight: '500' }}>{k.label}</p>
+                  <p style={{ margin: 0, fontSize: '28px', fontWeight: '700', color: '#1a1a2e' }}>{k.valor}</p>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Tarjetas de Indicadores Clave */}
-          <div className="row mb-4">
-            <div className="col-md-4 mb-3">
-              <div className="card border-0 shadow-sm bg-primary text-white">
-                <div className="card-body">
-                  <h6>Solicitudes Totales</h6>
-                  <h2>154</h2>
-                </div>
+          {/* Accesos */}
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            {accesos.map((a) => (
+              <div key={a.titulo} style={{
+                flex: '1 1 280px', backgroundColor: 'white', borderRadius: '16px',
+                padding: '28px 24px', boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+              }}>
+                <h3 style={{ margin: '0 0 8px', fontWeight: '700', color: '#1a1a2e', fontSize: '17px' }}>
+                  {a.titulo}
+                </h3>
+                <p style={{ margin: '0 0 24px', color: '#777', fontSize: '13px', lineHeight: '1.6' }}>
+                  {a.desc}
+                </p>
+                <IonButton
+                  expand="block"
+                  onClick={() => history.push(a.ruta)}
+                  style={{
+                    '--background': a.color, '--border-radius': '12px',
+                    '--box-shadow': 'none', fontWeight: '600',
+                  }}
+                >
+                  {a.label}
+                </IonButton>
               </div>
-            </div>
-            <div className="col-md-4 mb-3">
-              <div className="card border-0 shadow-sm bg-warning text-dark">
-                <div className="card-body">
-                  <h6>Pendientes de Revisión</h6>
-                  <h2>28</h2>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-4 mb-3">
-              <div className="card border-0 shadow-sm bg-success text-white">
-                <div className="card-body">
-                  <h6>Tasa de Respuesta</h6>
-                  <h2>94.2%</h2>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Sección de Accesos de Gestión */}
-          <div className="row">
-            <div className="col-md-6 mb-4">
-              <div className="card border-0 shadow-sm h-100">
-                <div className="card-body">
-                  <h5 style={{ fontFamily: "'Roboto Slab', serif" }}>Bandeja de Requerimientos</h5>
-                  <p className="text-muted small">Revisar, clasificar y responder a las solicitudes de información ciudadana.</p>
-                  <IonButton routerLink="/admin/gestion" expand="block" style={{ '--background': '#343a40' }}>
-                    Ir a Gestión
-                  </IonButton>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-6 mb-4">
-              <div className="card border-0 shadow-sm h-100">
-                <div className="card-body">
-                  <h5 style={{ fontFamily: "'Roboto Slab', serif" }}>Mantenedor de Cuentas</h5>
-                  <p className="text-muted small">Administración de perfiles de usuarios y niveles de privilegios en el sistema.</p>
-                  <IonButton routerLink="/admin/usuarios" expand="block" fill="outline" style={{ '--color': '#343a40', '--border-color': '#343a40' }}>
-                    Gestionar Usuarios
-                  </IonButton>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </IonContent>
     </IonPage>

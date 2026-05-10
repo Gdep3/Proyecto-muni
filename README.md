@@ -221,6 +221,3 @@ La UI es adaptativa (Responsive Design) empleando el sistema de grillas de Ionic
 * **Usabilidad y Rendimiento:** Componentes nativos como IonHeader, IonContent e IonItem aseguran tiempos de respuesta ágiles y patrones de interacción familiares (iOS/Android).
 
 * **Claridad Estructural:** La separación lógica de directorios (/app vs /admin) en el frontend reduce el acoplamiento y facilita el mantenimiento concurrente por el equipo.
-
-* **Escalabilidad:** React Router modularizado permite inyectar futuros roles (ej. Auditor) sin quebrar la lógica ni la seguridad de los roles preexistentes.
-##

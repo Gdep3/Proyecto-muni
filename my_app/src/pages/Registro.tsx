@@ -1,123 +1,134 @@
 import React, { useState } from 'react';
-import { 
-  IonPage, 
-  IonHeader, 
-  IonToolbar, 
+import {
+  IonPage,
   IonContent,
-  IonButtons,
-  IonBackButton
+  IonButton,
+  IonIcon,
 } from '@ionic/react';
+import { closeOutline } from 'ionicons/icons';
+import { useHistory } from 'react-router-dom';
 
 const Registro: React.FC = () => {
+  const history = useHistory();
   const [terminosAceptados, setTerminosAceptados] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Creación de cuenta solicitada...");
+    history.push('/login');
   };
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar style={{ '--background': '#ffffff', '--color': '#333333' }}>
-          <IonButtons slot="start">
-            {/* Vuelve de manera natural al Login */}
-            <IonBackButton defaultHref="/login" text="Volver" />
-          </IonButtons>
-          <div className="container mt-2 mb-2">
-            <h5 style={{ fontFamily: "'Roboto Slab', serif", margin: 0, fontWeight: 'bold', color: '#0f69b4' }}>
-              Municipalidad de Santo Domingo
-            </h5>
-          </div>
-        </IonToolbar>
-      </IonHeader>
+      <IonContent className="ion-padding" style={{ '--background': '#f4f6f9' }}>
+        <div className="container" style={{ marginTop: '5vh', display: 'flex', justifyContent: 'center' }}>
+          <div className="card shadow-lg border-0" style={{ borderRadius: '15px', maxWidth: '500px', width: '100%', position: 'relative' }}>
+            <div className="card-body p-4">
 
-      <IonContent style={{ '--background': '#f4f6f9' }}>
-        <div className="container mt-4 mb-5">
-          <div className="row justify-content-center">
-            <div className="col-md-8 col-lg-7">
-              <div className="card shadow-sm border-0" style={{ borderRadius: '12px' }}>
-                <div className="card-body p-4 p-md-5">
-                  <h4 style={{ fontFamily: "'Roboto Slab', serif", color: '#333', marginBottom: '24px' }}>
-                    Creación de Cuenta Ciudadana
-                  </h4>
-                  
-                  <form onSubmit={handleSubmit}>
-                    <div className="row">
-                      <div className="col-md-6 mb-3">
-                        <label className="form-label font-weight-bold">Nombre Completo</label>
-                        <input type="text" className="form-control" placeholder="Ej: Ana López" required />
-                      </div>
-                      <div className="col-md-6 mb-3">
-                        <label className="form-label font-weight-bold">RUT</label>
-                        <input type="text" className="form-control" placeholder="12.345.678-9" required />
-                      </div>
-                    </div>
+              {/* Botón cerrar */}
+              <IonButton
+                onClick={() => history.push('/')}
+                shape="round"
+                fill="clear"
+                style={{ position: 'absolute', top: '5px', right: '5px', width: '30px', height: '30px', background: 'none', border: 'none' }}
+              >
+                <IonIcon slot="icon-only" icon={closeOutline} color="dark" />
+              </IonButton>
 
-                    <div className="mb-3">
-                      <label className="form-label font-weight-bold">Correo Electrónico</label>
-                      <input type="email" className="form-control" placeholder="correo@ejemplo.cl" required />
-                    </div>
+              <h5 className="mb-1" style={{ fontWeight: 'bold', color: '#15305b' }}>Crear Cuenta</h5>
+              <p className="text-muted small mb-4">Municipalidad de Santo Domingo</p>
 
-                    <div className="row">
-                      <div className="col-md-6 mb-3">
-                        <label className="form-label font-weight-bold">Región</label>
-                        <select className="form-control" required defaultValue="">
-                          <option value="" disabled>Seleccione...</option>
-                          <option value="valparaiso">Región de Valparaíso</option>
-                          <option value="metropolitana">Región Metropolitana</option>
-                        </select>
-                      </div>
-                      <div className="col-md-6 mb-3">
-                        <label className="form-label font-weight-bold">Comuna</label>
-                        <select className="form-control" required defaultValue="">
-                          <option value="" disabled>Seleccione...</option>
-                          <option value="santo_domingo">Santo Domingo</option>
-                          <option value="san_antonio">San Antonio</option>
-                        </select>
-                      </div>
-                    </div>
+              <form onSubmit={handleSubmit}>
 
-                    <div className="row">
-                      <div className="col-md-6 mb-3">
-                        <label className="form-label font-weight-bold">Contraseña</label>
-                        <input type="password" className="form-control" required />
-                      </div>
-                      <div className="col-md-6 mb-3">
-                        <label className="form-label font-weight-bold">Confirmar Contraseña</label>
-                        <input type="password" className="form-control" required />
-                      </div>
-                    </div>
-
-                    <div className="form-check mb-4 mt-3 p-3 bg-light rounded">
-                      <input 
-                        className="form-check-input ml-1" 
-                        type="checkbox" 
-                        id="terminos" 
-                        required 
-                        onChange={(e) => setTerminosAceptados(e.target.checked)}
-                      />
-                      <label className="form-check-label ml-4" htmlFor="terminos" style={{ fontSize: '0.9rem' }}>
-                        Declaro que la información ingresada es verídica y acepto las políticas de uso de la Plataforma de Acceso a la Información.
-                      </label>
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      className={`btn btn-lg w-100 shadow-sm ${terminosAceptados ? 'btn-primary' : 'btn-secondary'}`}
-                      style={{ 
-                        backgroundColor: terminosAceptados ? '#0f69b4' : '#6c757d', 
-                        borderColor: 'transparent',
-                        borderRadius: '8px'
-                      }}
-                      disabled={!terminosAceptados}
-                    >
-                      Registrar Cuenta
-                    </button>
-                  </form>
-
+                {/* Nombre y RUT */}
+                <div className="row">
+                  <div className="col-6 mb-3">
+                    <label className="form-label small font-weight-bold">Nombre Completo</label>
+                    <input type="text" className="form-control" placeholder="Ej: Ana López" required style={{ borderRadius: '8px' }} />
+                  </div>
+                  <div className="col-6 mb-3">
+                    <label className="form-label small font-weight-bold">RUT</label>
+                    <input type="text" className="form-control" placeholder="12.345.678-9" required style={{ borderRadius: '8px' }} />
+                  </div>
                 </div>
-              </div>
+
+                {/* Email */}
+                <div className="mb-3">
+                  <label className="form-label small font-weight-bold">Correo Electrónico</label>
+                  <input type="email" className="form-control" placeholder="correo@ejemplo.cl" required style={{ borderRadius: '8px' }} />
+                </div>
+
+                {/* Región y Comuna */}
+                <div className="row">
+                  <div className="col-6 mb-3">
+                    <label className="form-label small font-weight-bold">Región</label>
+                    <select className="form-control" required defaultValue="" style={{ borderRadius: '8px' }}>
+                      <option value="" disabled>Seleccione...</option>
+                      <option value="valparaiso">Región de Valparaíso</option>
+                      <option value="metropolitana">Región Metropolitana</option>
+                    </select>
+                  </div>
+                  <div className="col-6 mb-3">
+                    <label className="form-label small font-weight-bold">Comuna</label>
+                    <select className="form-control" required defaultValue="" style={{ borderRadius: '8px' }}>
+                      <option value="" disabled>Seleccione...</option>
+                      <option value="santo_domingo">Santo Domingo</option>
+                      <option value="san_antonio">San Antonio</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Contraseñas */}
+                <div className="row">
+                  <div className="col-6 mb-3">
+                    <label className="form-label small font-weight-bold">Contraseña</label>
+                    <input type="password" className="form-control" placeholder="••••••••" required style={{ borderRadius: '8px' }} />
+                  </div>
+                  <div className="col-6 mb-3">
+                    <label className="form-label small font-weight-bold">Confirmar Contraseña</label>
+                    <input type="password" className="form-control" placeholder="••••••••" required style={{ borderRadius: '8px' }} />
+                  </div>
+                </div>
+
+                {/* Términos */}
+                <div className="form-check mb-4 p-3 bg-light rounded" style={{ paddingLeft: '2.5rem' }}>
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="terminos"
+                    required
+                    onChange={e => setTerminosAceptados(e.target.checked)}
+                  />
+                  <label className="form-check-label small" htmlFor="terminos">
+                    Declaro que la información ingresada es verídica y acepto las políticas de uso de la Plataforma de Acceso a la Información.
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100"
+                  disabled={!terminosAceptados}
+                  style={{
+                    backgroundColor: terminosAceptados ? '#006FB3' : '#aab4be',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontWeight: '600',
+                  }}
+                >
+                  Registrar Cuenta
+                </button>
+
+                <div className="text-center mt-3">
+                  <span
+                    className="small text-muted"
+                    style={{ textDecoration: 'underline', cursor: 'pointer' }}
+                    onClick={() => history.push('/login')}
+                  >
+                    ¿Ya tienes cuenta? Iniciar sesión
+                  </span>
+                </div>
+
+              </form>
             </div>
           </div>
         </div>
