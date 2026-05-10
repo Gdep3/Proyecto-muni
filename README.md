@@ -221,3 +221,6 @@ La UI es adaptativa (Responsive Design) empleando el sistema de grillas de Ionic
 * **Usabilidad y Rendimiento:** Componentes nativos como IonHeader, IonContent e IonItem aseguran tiempos de respuesta ágiles y patrones de interacción familiares (iOS/Android).
 
 * **Claridad Estructural:** La separación lógica de directorios (/app vs /admin) en el frontend reduce el acoplamiento y facilita el mantenimiento concurrente por el equipo.
+
+## Bugs conocidos
+- Al ingresar como administrador o usuario, y cerrar la sesión y se ingresa como el opuesto se muestra la página en la que se estaba, es decir si se estaba en la página de administrador se cierra sesión y en la misma página de login que se muestra, se ingresa como usuario se rediccionara a la página de administrador en lugar de la de usuario.
