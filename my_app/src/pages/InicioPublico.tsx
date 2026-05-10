@@ -34,6 +34,7 @@ import {
   Legend, PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts';
 import { useHistory } from 'react-router-dom';
+import HeaderLinks from '../components/HeaderLink';
  
 /* ─── Datos ─────────────────────────────────────────────────────── */
 const barDataBase = [
@@ -88,6 +89,8 @@ const renderCustomLabel = ({ cx, cy, midAngle, outerRadius, name, value }: any) 
   const radius = outerRadius + 30;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+
   return (
     <text x={x} y={y} fill="#444" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11}>
       <tspan x={x} dy="-0.4em" fontWeight="bold">{name}</tspan>
@@ -95,12 +98,13 @@ const renderCustomLabel = ({ cx, cy, midAngle, outerRadius, name, value }: any) 
     </text>
   );
 };
+
 interface InicioPublicoProps {
   userRole?: 'ciudadano' | 'admin' | null;
+  isAuth?: boolean;  
 }
- 
-/* ─── Componente principal ──────────────────────────────────────── */
-const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole }) => {
+
+const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false }) => {
   const history = useHistory();
   const [selectedYear, setSelectedYear] = useState('2026');
   const [compareYear, setCompareYear]   = useState('Comparar');
@@ -131,23 +135,11 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole }) => {
     setPopoverOpen(true);
   };
  
+  console.log('isAuth:', isAuth, 'userRole:', userRole);
+
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar style={{ '--background': '#15305b', '--color': '#ffffff' }}>
-          <div style={{
-            display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
-            gap: '28px', padding: '10px 30px', fontSize: '13px', color: '#ffffff',
-            borderBottom: '1px solid rgba(255,255,255,0.15)',
-          }}>
-            <span style={{ cursor: 'pointer' }}>Plataforma Ley Lobby</span>
-            <span style={{ cursor: 'pointer' }}>Transparencia Activa</span>
-            <span style={{ cursor: 'pointer' }}>Solicitud Ley de Transparencia</span>
-            <span style={{ cursor: 'pointer' }}>Decretos</span>
-            <span style={{ color: '#f1c40f', fontWeight: 'bold', cursor: 'pointer' }}>Consejo Municipal en VIVO</span>
-          </div>
-        </IonToolbar>
-      </IonHeader>
+      <HeaderLinks/>
  
       <IonContent style={{ '--background': '#f0f2f5' }}>
  
@@ -172,21 +164,21 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole }) => {
             ))}
           </div>
          <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
-          {/* Botón subir archivo — solo visible para admin */}
-          {userRole === 'admin' && (
-            <IonButton
-              color="light"
-              style={{ width: '48px', height: '48px', '--border-radius': '50%', '--padding-start': '0', '--padding-end': '0' }}
-            >
-              <IonIcon icon={cloudUploadOutline} style={{ color: '#15305b', fontSize: '22px' }} />
-            </IonButton>
-          )}
 
           {/* Botón usuario */}
           <IonButton
-            routerLink="/login"
             color="light"
-            style={{ width: '48px', height: '48px', '--border-radius': '50%', '--padding-start': '0', '--padding-end': '0' }}
+            onClick={() => {
+              if (isAuth && userRole === 'ciudadano') {
+                history.push('/app/perfil');
+              } else {
+                history.push('/registro');
+              }
+            }}
+            style={{
+              width: '48px', height: '48px', '--border-radius': '50%',
+              '--padding-start': '0', '--padding-end': '0',
+            }}
           >
             <IonIcon icon={personOutline} style={{ color: '#15305b', fontSize: '22px' }} />
           </IonButton>

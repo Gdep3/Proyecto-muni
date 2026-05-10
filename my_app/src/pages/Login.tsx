@@ -16,10 +16,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const history = useHistory();
 
   const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Por ahora simula siempre admin — después conectas tu backend aquí
-    onLogin?.('admin');
-    history.push('/inicio');
+  e.preventDefault();
+  onLogin?.('admin');
+  history.push('/redirect');
   };
 
   return (
@@ -46,6 +45,30 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     <a href="#" className="small text-muted" style={{ textDecoration: 'underline' }}>¿Olvidaste la contraseña?</a>
                   </div>
                 </form>
+                {/* Accesos rápidos de prueba */}
+                <div className="mt-3">
+                  <p className="text-muted small text-center mb-2">— Acceso rápido (solo pruebas) —</p>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary w-100"
+                      style={{ borderRadius: '8px', fontSize: '13px' }}
+                      // Ciudadano
+                      onClick={() => { onLogin?.('ciudadano'); history.push('/app/inicio'); }}
+                    >
+                      Entrar como Ciudadano
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger w-100"
+                      style={{ borderRadius: '8px', fontSize: '13px' }}
+                      // Admin
+                      onClick={() => { onLogin?.('admin'); history.push('/admin/dashboard'); }}
+                    >
+                      Entrar como Admin
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
