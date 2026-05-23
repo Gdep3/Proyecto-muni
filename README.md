@@ -9,29 +9,30 @@
 Antes de ejecutar el proyecto es necesario contar con:
 - Node.js
 - Ionic
+- Python 3.11
+- XAMPP (para MariaDB)
 - opcionalmente git
-
-### Paso 1
+### Paso 1 — Clonar el repositorio
 Primero se debe clonar, si es que se tiene git, o descargar el proyecto.
-Si se utiliza git se debera introducir el siguiente comando:
-
 ```bash
 git clone <url_repositorio>
 ```
-
-### Paso 2
-Ahora se deben introducir los siguientes comandos:
+ 
+---
+ 
+## Frontend (Ionic + React)
+ 
+### Paso 2 — Instalar dependencias
 ```bash
-cd .\my_app\
+cd my_app
 npm install
 ```
-Si esta teniendo problemas puede ser porque existen conflictos con la versión de vite, para resolverlo utilize el siguiente comando:
+Si hay conflictos con la versión de Vite:
 ```bash
 npm install --legacy-peer-deps
 ```
-
-### Paso 3
-Para ejecutra el servidor local utilize:
+ 
+### Paso 3 — Ejecutar el servidor local
 ```bash
 npm run dev
 ```
@@ -39,15 +40,72 @@ o
 ```bash
 ionic serve
 ```
-
-### Paso 4
-Crear un archivo .env siguiendo este ejemplo:
+ 
+---
+ 
+## Backend (FastAPI + MariaDB)
+ 
+### Paso 4 — Iniciar MySQL en XAMPP
+Abre XAMPP y presiona **Start** en MySQL.
+ 
+### Paso 5 — Crear la base de datos
+Abre una terminal y ejecuta:
 ```bash
-DATABASE_URL=mysql+pymysql://usuario:password@localhost:3306/municipalidad_db
+"C:\xampp\mysql\bin\mysql.exe" -u root
+```
+Dentro de MySQL:
+```sql
+CREATE DATABASE municipalidad_db;
+EXIT;
+```
+ 
+### Paso 6 — Crear el archivo .env
+Dentro de la carpeta `backend/` crea un archivo llamado `.env`:
+```bash
+DATABASE_URL=mysql+pymysql://root:@localhost:3306/municipalidad_db
 SECRET_KEY=tu_clave_secreta_aqui
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 ```
+> Si tu MySQL tiene contraseña cambia `root:@` por `root:TuContraseña@`
+ 
+### Paso 7 — Crear entorno virtual e instalar dependencias
+```bash
+cd backend
+python -m venv .venv
+```
+Activar el entorno virtual:
+- **Windows:** `.venv\Scripts\activate`
+- **Mac/Linux:** `source .venv/bin/activate`
+Instalar dependencias:
+```bash
+pip install -r requirements.txt
+```
+Cada vez que abras una terminal nueva deberás activar el entorno virtual antes de ejecutar el servidor.
+
+### Paso 8 — Ejecutar el servidor
+```bash
+uvicorn app.main:app --reload
+```
+El servidor queda disponible en `http://localhost:8000`  
+La documentación interactiva en `http://localhost:8000/docs`
+ 
+---
+ 
+## Endpoints de la API
+ 
+| Método | Ruta | Descripción | Rol |
+|--------|------|-------------|-----|
+| POST | `/auth/register` | Registrar usuario | Público |
+| POST | `/auth/login` | Iniciar sesión | Público |
+| GET | `/solicitudes` | Listar solicitudes | Ciudadano/Admin |
+| POST | `/solicitudes` | Crear solicitud | Ciudadano |
+| PUT | `/solicitudes/{id}` | Actualizar solicitud | Admin |
+| DELETE | `/solicitudes/{id}` | Eliminar solicitud | Admin |
+| GET | `/usuarios` | Listar usuarios | Admin |
+ 
+---
+ 
 ## Requerimientos
 
 ### Funcionales
