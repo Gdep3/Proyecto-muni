@@ -40,6 +40,14 @@ o
 ionic serve
 ```
 
+### Paso 4
+Crear un archivo .env siguiendo este ejemplo:
+```bash
+DATABASE_URL=mysql+pymysql://usuario:password@localhost:3306/municipalidad_db
+SECRET_KEY=tu_clave_secreta_aqui
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+```
 ## Requerimientos
 
 ### Funcionales
