@@ -4,7 +4,7 @@ from datetime import datetime
 from app.models import RolEnum, EstadoSolicitudEnum
 import re
 
-# ─── Usuario ─────────────────────────────────────────────────────
+# Usuario
 
 class UsuarioCreate(BaseModel):
     nombre: str
@@ -42,7 +42,7 @@ class UsuarioResponse(BaseModel):
         orm_mode = True  # v1 usa orm_mode en vez de from_attributes
 
 
-# ─── Auth ─────────────────────────────────────────────────────────
+# Auth
 
 class LoginRequest(BaseModel):
     rut: str
@@ -56,7 +56,7 @@ class TokenResponse(BaseModel):
     nombre: str
 
 
-# ─── Solicitud ────────────────────────────────────────────────────
+# Solicitud
 
 class SolicitudCreate(BaseModel):
     categoria: str
@@ -82,4 +82,33 @@ class SolicitudResponse(BaseModel):
     updated_at: Optional[datetime]
 
     class Config:
-        orm_mode = True  # v1 usa orm_mode en vez de from_attributes
+        orm_mode = True
+
+# Gastos
+
+class GastoResponse(BaseModel):
+    id: int
+    año: int
+    mes: int
+    area: str
+    monto: int
+
+    class Config:
+        orm_mode = True
+
+# Documentos
+
+class DocumentoResponse(BaseModel):
+    id:          int
+    codigo:      Optional[str]
+    tipo:        Optional[str]
+    categoria:   Optional[str]
+    area:        Optional[str]
+    fecha_pub:   Optional[str]
+    descripcion: Optional[str]
+    enlace:      Optional[str]
+    año:         Optional[int]
+    mes:         Optional[int]
+
+    class Config:
+        orm_mode = True

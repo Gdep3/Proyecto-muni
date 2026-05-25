@@ -4,7 +4,7 @@ from sqlalchemy.sql import func
 from app.database import Base
 import enum
 
-# ─── Enums ───────────────────────────────────────────────────────
+# Enums
 class RolEnum(str, enum.Enum):
     ciudadano = "ciudadano"
     admin     = "admin"
@@ -13,7 +13,7 @@ class EstadoSolicitudEnum(str, enum.Enum):
     pendiente  = "pendiente"
     respondida = "respondida"
 
-# ─── Tabla: usuarios ─────────────────────────────────────────────
+# Tabla: usuarios
 class Usuario(Base):
     __tablename__ = "usuarios"
 
@@ -31,7 +31,7 @@ class Usuario(Base):
     solicitudes = relationship("Solicitud", back_populates="usuario")
 
 
-# ─── Tabla: solicitudes ───────────────────────────────────────────
+# Tabla: solicitudes
 class Solicitud(Base):
     __tablename__ = "solicitudes"
 
@@ -48,3 +48,29 @@ class Solicitud(Base):
 
     # Relación con usuario
     usuario = relationship("Usuario", back_populates="solicitudes")
+
+# Tabla: Gastos
+class Gasto(Base):
+    __tablename__ = "gastos"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    año        = Column(Integer, nullable=False)
+    mes        = Column(Integer, nullable=False)  # 1-12
+    area       = Column(String(100), nullable=False)  # Salud, Educacion, etc
+    monto      = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+# Tabla: Documentos
+class Documento(Base):
+    __tablename__ = "documentos"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    codigo      = Column(String(20))
+    tipo        = Column(String(100))
+    categoria   = Column(String(100))
+    area        = Column(String(100))
+    fecha_pub   = Column(String(20))
+    descripcion = Column(Text)
+    enlace      = Column(Text)
+    año         = Column(Integer)
+    mes         = Column(Integer)

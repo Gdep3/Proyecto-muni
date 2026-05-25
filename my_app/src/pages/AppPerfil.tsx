@@ -156,7 +156,10 @@ const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout }) => {
             }}>
               <button
                 type="button"
-                onClick={() => { onLogout?.(); history.replace('/inicio'); }}
+                onClick={() => {
+                  onLogout?.();
+                  history.replace('/inicio');
+                }}
                 style={{
                   width: '100%', padding: '13px', backgroundColor: 'transparent', color: '#e74c3c',
                   border: '1px solid #e74c3c', borderRadius: '12px', fontSize: '14px',

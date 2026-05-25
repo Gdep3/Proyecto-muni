@@ -4,7 +4,7 @@ import {
 } from '@ionic/react';
 import {
   personOutline, documentTextOutline, peopleOutline,
-  checkmarkCircleOutline, timeOutline, trendingUpOutline,
+  checkmarkCircleOutline, timeOutline, trendingUpOutline, shareOutline
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import HeaderLinks from '../components/HeaderLink';
@@ -58,13 +58,42 @@ const AdminDashboard: React.FC = () => {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <IonButton color="light" routerLink="/login" style={{
-              '--border-radius': '12px', '--box-shadow': 'none',
-              fontWeight: '600', fontSize: '13px', height: '42px',
-            }}>
-              Cerrar sesión
+            <input
+            type="file"
+            id="csv-upload"
+            accept=".csv"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const formData = new FormData();
+              formData.append('file', file);
+              try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('http://localhost:8000/documentos/importar', {
+                  method: 'POST',
+                  headers: { Authorization: `Bearer ${token}` },
+                  body: formData,
+                });
+                const data = await res.json();
+                alert(data.mensaje);
+              } catch {
+                alert('Error al importar el archivo');
+              }
+            }}
+          />
+          <IonButton
+              color="light"
+              onClick={() => document.getElementById('csv-upload')?.click()}
+              style={{
+                width: '48px', height: '48px', '--border-radius': '50%',
+                '--padding-start': '0', '--padding-end': '0',
+              }}
+            >
+              <IonIcon icon={shareOutline} style={{ color: '#15305b', fontSize: '22px' }} />
             </IonButton>
-            <IonButton color="light" style={{
+            <IonButton color="light" onClick={() => history.push('/admin/perfil')}
+               style={{
               width: '48px', height: '48px', '--border-radius': '50%',
               '--padding-start': '0', '--padding-end': '0',
             }}>

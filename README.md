@@ -10,7 +10,7 @@ Antes de ejecutar el proyecto es necesario contar con:
 - Node.js
 - Ionic
 - Python 3.11
-- XAMPP (para MariaDB)
+- XAMPP (para MySQL)
 - opcionalmente git
 ### Paso 1 — Clonar el repositorio
 Primero se debe clonar, si es que se tiene git, o descargar el proyecto.
@@ -67,7 +67,7 @@ SECRET_KEY=tu_clave_secreta_aqui
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 ```
-> Si tu MySQL tiene contraseña cambia `root:@` por `root:TuContraseña@`
+Si tu MySQL tiene contraseña cambia `root:@` por `root:TuContraseña@`
  
 ### Paso 7 — Crear entorno virtual e instalar dependencias
 ```bash
@@ -78,7 +78,7 @@ Activar el entorno virtual:
 - **Windows:** `.venv\Scripts\activate`
 - **Mac/Linux:** `source .venv/bin/activate`
 Instalar dependencias:
-```bash
+```Bash
 pip install -r requirements.txt
 ```
 Cada vez que abras una terminal nueva deberás activar el entorno virtual antes de ejecutar el servidor.

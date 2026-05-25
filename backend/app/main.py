@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routers import auth, solicitudes, usuarios
+from app.routers import auth, solicitudes, usuarios, gastos, documentos
+
 
 # Crea todas las tablas en la BD si no existen
 Base.metadata.create_all(bind=engine)
@@ -12,7 +13,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# ─── CORS ────────────────────────────────────────────────────────
+# CORS
 # Permite que el frontend Ionic (localhost:5173) consuma la API
 app.add_middleware(
     CORSMiddleware,
@@ -22,13 +23,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── Routers ─────────────────────────────────────────────────────
+# Routers
 app.include_router(auth.router)
 app.include_router(solicitudes.router)
 app.include_router(usuarios.router)
+app.include_router(gastos.router)
+app.include_router(documentos.router)
 
 
-# ─── Health check ────────────────────────────────────────────────
+# Health check
 @app.get("/", tags=["Estado"])
 def root():
     return {"mensaje": "API Municipalidad Santo Domingo funcionando ✓"}

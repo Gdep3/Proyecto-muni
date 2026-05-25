@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
+import { authService } from './services/api';
+
 
 // 1. PÁGINAS PÚBLICAS
 import Login from './pages/Login';
@@ -22,6 +24,11 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminGestion from './pages/AdminGestion';
 import AdminUsuario from './pages/AdminUsuario';
 
+
+import DetalleSolicitud from './pages/DetalleSolicitud';
+import AdminGestionDetalle from './pages/AdminGestionDetalle';
+
+
 // Componente de Ruta Protegida (Lo creamos en el paso anterior)
 import PrivateRoute from './routes/PrivateRoute';
 
@@ -40,9 +47,10 @@ import '@ionic/react/css/display.css';
 setupIonicReact();
 
 const App: React.FC = () => {
-  // Simulación de estados de sesión según tu arquitectura
-  const [isAuth, setIsAuth] = useState(false); 
-  const [userRole, setUserRole] = useState<'ciudadano' | 'admin'>('ciudadano');
+    const [isAuth, setIsAuth] = useState(authService.isAuth());
+    const [userRole, setUserRole] = useState<'ciudadano' | 'admin'>(
+      authService.getRol() ?? 'ciudadano'
+    );
 
   return (
     <IonApp>
@@ -58,7 +66,7 @@ const App: React.FC = () => {
           )} />
           <Route exact path="/lista-ampliada" component={ListaArchivoAmpliada} />
           <Route exact path="/registro" component={Registro} />
-          <Route exact path="/detalle-archivo" component={DetalleArchivo} />
+          <Route exact path="/detalle-archivo/:id" component={DetalleArchivo} />
           <Route exact path="/grafico-ampliado" component={GraficoAmpliado} />
           
           {/* Rutas ciudadano */}
@@ -71,7 +79,19 @@ const App: React.FC = () => {
           <PrivateRoute exact path="/admin/dashboard" component={AdminDashboard} isAuthenticated={isAuth} requiredRole="admin" userRole={userRole} />
           <PrivateRoute exact path="/admin/gestion"   component={AdminGestion}   isAuthenticated={isAuth} requiredRole="admin" userRole={userRole} />
           <PrivateRoute exact path="/admin/usuarios"  component={AdminUsuario}   isAuthenticated={isAuth} requiredRole="admin" userRole={userRole} />
-                    
+
+          <PrivateRoute exact path="/app/solicitudes/:id"   component={DetalleSolicitud}    isAuthenticated={isAuth} requiredRole="ciudadano" userRole={userRole} />
+          <PrivateRoute exact path="/admin/gestion/:id"     component={AdminGestionDetalle} isAuthenticated={isAuth} requiredRole="admin"     userRole={userRole} />
+          <PrivateRoute
+          exact path="/admin/perfil"
+          component={() => (
+            <AppPerfil onLogout={() => { setIsAuth(false); setUserRole('ciudadano'); }} />
+          )}
+          isAuthenticated={isAuth}
+          requiredRole="admin"
+          userRole={userRole}
+          />
+
           {/*REDIRECCIÓN POR DEFECTO*/}
           <Route exact path="/">
             <Redirect to="/inicio" />

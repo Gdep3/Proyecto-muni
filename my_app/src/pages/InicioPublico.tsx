@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonPage,
-  IonHeader,
-  IonToolbar,
   IonContent,
   IonGrid,
   IonRow,
@@ -24,7 +22,6 @@ import {
   expandOutline,
   personOutline,
   calendarOutline,
-  cloudUploadOutline,
   reorderThreeOutline,
   informationCircleOutline,
   chevronForwardOutline,
@@ -35,62 +32,40 @@ import {
 } from 'recharts';
 import { useHistory } from 'react-router-dom';
 import HeaderLinks from '../components/HeaderLink';
- 
-/* ─── Datos ─────────────────────────────────────────────────────── */
-const barDataBase = [
-  { mes: 'Enero',      año1: 100000, año2: 0 },
-  { mes: 'Febrero',    año1: 200000, año2: 0 },
-  { mes: 'Marzo',      año1: 300000, año2: 0 },
-  { mes: 'Abril',      año1: 100000, año2: 0 },
-  { mes: 'Junio',      año1: 0,      año2: 0 },
-  { mes: 'Julio',      año1: 0,      año2: 0 },
-  { mes: 'Agosto',     año1: 0,      año2: 0 },
-  { mes: 'Septiembre', año1: 0,      año2: 0 },
-  { mes: 'Octubre',    año1: 0,      año2: 0 },
-  { mes: 'Noviembre',  año1: 0,      año2: 0 },
+import { gastosService } from '../services/api';
+import { documentosService } from '../services/api';
+
+/* ─── Constantes ────────────────────────────────────────────────── */
+const MESES = [
+  { label: 'Enero', num: 1 }, { label: 'Febrero', num: 2 }, { label: 'Marzo', num: 3 },
+  { label: 'Abril', num: 4 }, { label: 'Junio', num: 6 }, { label: 'Julio', num: 7 },
+  { label: 'Agosto', num: 8 }, { label: 'Septiembre', num: 9 },
+  { label: 'Octubre', num: 10 }, { label: 'Noviembre', num: 11 },
 ];
- 
-const barDataComparado = [
-  { mes: 'Enero',      año1: 100000, año2: 200000 },
-  { mes: 'Febrero',    año1: 200000, año2: 460000 },
-  { mes: 'Marzo',      año1: 300000, año2: 650000 },
-  { mes: 'Abril',      año1: 100000, año2: 80000  },
-  { mes: 'Junio',      año1: 520000, año2: 0      },
-  { mes: 'Julio',      año1: 310000, año2: 0      },
-  { mes: 'Agosto',     año1: 400000, año2: 0      },
-  { mes: 'Septiembre', año1: 460000, año2: 0      },
-  { mes: 'Octubre',    año1: 800000, año2: 0      },
-  { mes: 'Noviembre',  año1: 100000, año2: 0      },
-];
- 
-const pieData = [
-  { name: 'Sin gastar', value: 42.9 },
-  { name: 'Becas',      value: 28.6 },
-  { name: 'Algo',       value: 14.3 },
-  { name: 'Salud',      value: 14.3 },
-];
+
 const PIE_COLORS = ['#2a6095', '#1a9cd8', '#4ab8e8', '#3d7abf'];
- 
-const archivos = Array.from({ length: 6 }, (_, i) => `Archivo ${i + 1}`);
- 
-const renderPieLegend = () => (
+
+
+
+//const archivos = Array.from({ length: 6 }, (_, i) => `Archivo ${i + 1}`);
+
+/* ─── Helpers ───────────────────────────────────────────────────── */
+const renderPieLegend = (pieData: any[]) => (
   <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '8px' }}>
     {pieData.map((entry, i) => (
       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#444' }}>
-        <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: PIE_COLORS[i] }} />
+        <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
         {entry.name}
       </div>
     ))}
   </div>
 );
- 
+
 const renderCustomLabel = ({ cx, cy, midAngle, outerRadius, name, value }: any) => {
   const RADIAN = Math.PI / 180;
   const radius = outerRadius + 30;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-
   return (
     <text x={x} y={y} fill="#444" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11}>
       <tspan x={x} dy="-0.4em" fontWeight="bold">{name}</tspan>
@@ -99,23 +74,92 @@ const renderCustomLabel = ({ cx, cy, midAngle, outerRadius, name, value }: any) 
   );
 };
 
+/* ─── Props ─────────────────────────────────────────────────────── */
 interface InicioPublicoProps {
   userRole?: 'ciudadano' | 'admin' | null;
-  isAuth?: boolean;  
+  isAuth?: boolean;
 }
 
+/* ─── Componente ────────────────────────────────────────────────── */
 const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false }) => {
   const history = useHistory();
+
   const [selectedYear, setSelectedYear] = useState('2026');
   const [compareYear, setCompareYear]   = useState('Comparar');
   const [selectedArea, setSelectedArea] = useState('Salud');
   const [popoverOpen, setPopoverOpen]   = useState(false);
   const [popoverEvent, setPopoverEvent] = useState<any>(null);
- 
-  const comparando       = compareYear !== 'Comparar';
-  const barData          = comparando ? barDataComparado : barDataBase;
-  const tituloGrafico    = comparando ? `${selectedArea} ${selectedYear} vs ${compareYear}` : selectedArea;
- 
+  const [barData, setBarData]           = useState<any[]>([]);
+  const [pieData, setPieData]           = useState<any[]>([]);
+  const [documentos, setDocumentos]     = useState<any[]>([]);
+  const [docSeleccionado, setDocSeleccionado] = useState<number | null>(null);
+
+  // ── abrirMenu debe estar AQUÍ dentro ──
+  const abrirMenu = (e: React.MouseEvent, id: number) => {
+    e.persist();
+    setDocSeleccionado(id);
+    setPopoverEvent(e);
+    setPopoverOpen(true);
+  };
+
+  const comparando    = compareYear !== 'Comparar';
+  const tituloGrafico = comparando
+    ? `${selectedArea} ${selectedYear} vs ${compareYear}`
+    : selectedArea;
+
+  /* ── Cargar barras ── */
+  useEffect(() => {
+    const cargar = async () => {
+      try {
+        const area = selectedArea === 'Total' ? undefined : selectedArea;
+        const data1 = await gastosService.listar(Number(selectedYear), area);
+        let data2: any[] = [];
+        if (comparando) {
+          data2 = await gastosService.listar(Number(compareYear), area);
+        }
+        const transformado = MESES.map(({ label, num }) => ({
+          mes:  label,
+          año1: data1.find((d: any) => d.mes === num)?.monto ?? 0,
+          año2: data2.find((d: any) => d.mes === num)?.monto ?? 0,
+        }));
+        setBarData(transformado);
+      } catch {
+        setBarData(MESES.map(({ label }) => ({ mes: label, año1: 0, año2: 0 })));
+      }
+    };
+    cargar();
+  }, [selectedYear, compareYear, selectedArea]);
+
+  /* ── Cargar pie ── */
+  useEffect(() => {
+    const cargar = async () => {
+      try {
+        const data = await gastosService.listar(Number(selectedYear));
+        const porArea: Record<string, number> = {};
+        data.forEach((d: any) => {
+          porArea[d.area] = (porArea[d.area] ?? 0) + d.monto;
+        });
+        const total = Object.values(porArea).reduce((a: number, b) => a + (b as number), 0);
+        setPieData(
+          Object.entries(porArea).map(([name, monto]) => ({
+            name,
+            value: total > 0 ? Math.round(((monto as number) / total) * 1000) / 10 : 0,
+          }))
+        );
+      } catch {
+        setPieData([]);
+      }
+    };
+    cargar();
+  }, [selectedYear]);
+
+  /*Carga Lista*/
+  useEffect(() => {
+  documentosService.listar()
+    .then(data => setDocumentos(data))
+    .catch(() => {});
+  }, []);
+
   const selectStyle: React.CSSProperties & Record<string, any> = {
     backgroundColor: 'white',
     color: '#15305b',
@@ -128,21 +172,13 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
     '--highlight-color-focused': 'transparent',
     '--border-color': 'transparent',
   };
- 
-  const abrirMenu = (e: React.MouseEvent) => {
-    e.persist();
-    setPopoverEvent(e);
-    setPopoverOpen(true);
-  };
- 
-  console.log('isAuth:', isAuth, 'userRole:', userRole);
 
   return (
     <IonPage>
-      <HeaderLinks/>
- 
+      <HeaderLinks />
+
       <IonContent style={{ '--background': '#f0f2f5' }}>
- 
+
         {/* ── SECCIÓN AZUL ── */}
         <div style={{
           backgroundColor: '#15305b', padding: '24px 30px 110px 30px', color: 'white',
@@ -151,8 +187,8 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
         }}>
           <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
             {[
-              { label: 'Año',          value: selectedYear, setter: setSelectedYear, options: [['2025','2025'],['2026','2026']],                                         minWidth: '110px' },
-              { label: 'Comparar con', value: compareYear,  setter: setCompareYear,  options: [['Comparar','Comparar'],['2025','2025'],['2026','2026']],                  minWidth: '150px' },
+              { label: 'Año',          value: selectedYear, setter: setSelectedYear, options: [['2025','2025'],['2026','2026']],                                              minWidth: '110px' },
+              { label: 'Comparar con', value: compareYear,  setter: setCompareYear,  options: [['Comparar','Comparar'],['2025','2025'],['2026','2026']],                      minWidth: '150px' },
               { label: 'Area',         value: selectedArea, setter: setSelectedArea, options: [['Total','Total'],['Salud','Salud'],['Compras','Compras Bienes y Servicios']], minWidth: '140px' },
             ].map(({ label, value, setter, options, minWidth }) => (
               <div key={label} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -163,31 +199,29 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
               </div>
             ))}
           </div>
-         <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
 
-          {/* Botón usuario */}
-          <IonButton
-            color="light"
-            onClick={() => {
-              if (isAuth && userRole === 'ciudadano') {
-                history.push('/app/perfil');
-              } else {
-                history.push('/registro');
-              }
-            }}
-            style={{
-              width: '48px', height: '48px', '--border-radius': '50%',
-              '--padding-start': '0', '--padding-end': '0',
-            }}
-          >
-            <IonIcon icon={personOutline} style={{ color: '#15305b', fontSize: '22px' }} />
-          </IonButton>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
+            <IonButton color="light"
+              onClick={() => {
+                if (isAuth && userRole === 'ciudadano') {
+                  history.push('/app/perfil');
+                } else {
+                  history.push('/registro');
+                }
+              }}
+              style={{
+                width: '48px', height: '48px', '--border-radius': '50%',
+                '--padding-start': '0', '--padding-end': '0',
+              }}
+            >
+              <IonIcon icon={personOutline} style={{ color: '#15305b', fontSize: '22px' }} />
+            </IonButton>
+          </div>
         </div>
-        </div>
- 
-        {/* ── CONTENIDO ── */}
+
+        {/* Contenido  */}
         <IonGrid style={{ marginTop: '-80px', padding: '0 20px 30px 20px' }}>
- 
+
           <IonRow>
             {/* Barras */}
             <IonCol size="12" sizeMd="7">
@@ -218,7 +252,7 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
                 </IonCardContent>
               </IonCard>
             </IonCol>
- 
+
             {/* Pie */}
             <IonCol size="12" sizeMd="5">
               <IonCard style={{ borderRadius: '16px', boxShadow: '0 4px 14px rgba(0,0,0,0.08)', margin: '0', height: '100%' }}>
@@ -226,23 +260,29 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>
                     <IonIcon icon={expandOutline} style={{ cursor: 'pointer', color: '#999', fontSize: '20px' }} />
                   </div>
-                  {renderPieLegend()}
+                  {renderPieLegend(pieData)}
                   <div style={{ flex: 1 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={pieData} cx="50%" cy="50%" outerRadius="65%"
-                          dataKey="value" labelLine={true} label={renderCustomLabel}>
-                          {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
-                        </Pie>
-                        <Tooltip formatter={(v) => typeof v === 'number' ? `${v}%` : v} />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    {pieData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={pieData} cx="50%" cy="50%" outerRadius="65%"
+                            dataKey="value" labelLine={true} label={renderCustomLabel}>
+                            {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                          </Pie>
+                          <Tooltip formatter={(v) => typeof v === 'number' ? `${v}%` : v} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#aaa', fontSize: '13px' }}>
+                        Sin datos para mostrar
+                      </div>
+                    )}
                   </div>
                 </IonCardContent>
               </IonCard>
             </IonCol>
           </IonRow>
- 
+
           {/* ── BÚSQUEDA Y ACCIONES ── */}
           <IonRow className="ion-align-items-center" style={{ marginTop: '28px', marginBottom: '12px' }}>
             <IonCol size="12" sizeMd="5">
@@ -258,7 +298,7 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
               }}>
                 Mes <IonIcon slot="end" icon={calendarOutline} style={{ color: '#555' }} />
               </IonButton>
-              <IonButton fill="outline" shape="round" style={{
+              <IonButton fill="outline" shape="round" onClick={() => documentosService.descargarTodos()} style={{
                 '--background': 'white', '--border-color': '#d5d5d5', '--border-width': '1px',
                 '--padding-start': '0', '--padding-end': '0', width: '44px', height: '44px',
               }}>
@@ -270,38 +310,30 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
               }}>
                 <IonIcon slot="icon-only" icon={expandOutline} style={{ color: '#555' }} />
               </IonButton>
-              
             </IonCol>
           </IonRow>
- 
-          {/* ── LISTA ── */}
-          <IonRow>
-            <IonCol size="12">
-              <IonCard style={{ borderRadius: '16px', margin: '0', border: '1px solid #e0e0e0', boxShadow: 'none', overflow: 'hidden' }}>
-                <IonList lines="full" style={{ padding: 0 }}>
-                  {archivos.map((archivo, index) => (
-                    <IonItem key={index} button detail={false} style={{
-                      '--padding-start': '24px', '--padding-end': '16px',
-                      '--min-height': '58px', '--border-color': '#ebebeb',
-                    }}>
-                      <IonLabel style={{ fontWeight: '500', color: '#2a2a2a', fontSize: '15px' }}>
-                        {archivo}
-                      </IonLabel>
-                      <IonIcon
-                        slot="end"
-                        icon={reorderThreeOutline}
-                        style={{ color: '#aaa', fontSize: '22px', cursor: 'pointer' }}
-                        onClick={(e) => { e.stopPropagation(); abrirMenu(e as any); }}
-                      />
-                    </IonItem>
-                  ))}
-                </IonList>
-              </IonCard>
-            </IonCol>
-          </IonRow>
- 
+
+          {/* Lista */}
+
+          {documentos.map((doc) => (
+            <IonItem key={doc.id} button detail={false} style={{
+              '--padding-start': '24px', '--padding-end': '16px',
+              '--min-height': '58px', '--border-color': '#ebebeb',
+            }}>
+              <IonLabel style={{ fontWeight: '500', color: '#2a2a2a', fontSize: '15px' }}>
+                {doc.descripcion ?? doc.codigo ?? `Documento ${doc.id}`}
+              </IonLabel>
+              <IonIcon
+                slot="end"
+                icon={reorderThreeOutline}
+                style={{ color: '#aaa', fontSize: '22px', cursor: 'pointer' }}
+                onClick={(e) => { e.stopPropagation(); abrirMenu(e as any, doc.id); }}
+              />
+            </IonItem>
+          ))}
+
         </IonGrid>
- 
+
         {/* ── MENÚ CONTEXTUAL ── */}
         <IonPopover
           isOpen={popoverOpen}
@@ -311,14 +343,20 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
           style={{ '--width': '220px', '--border-radius': '14px', '--box-shadow': '0 4px 20px rgba(0,0,0,0.15)' }}
         >
           <IonList lines="full" style={{ padding: '4px 0' }}>
-            <IonItem button detail={false} onClick={() => setPopoverOpen(false)}
+            <IonItem button detail={false} onClick={() => {
+                setPopoverOpen(false);
+                if (docSeleccionado) documentosService.descargarUno(docSeleccionado);
+              }}
               style={{ '--padding-start': '16px', '--min-height': '52px' }}>
               <IonIcon icon={downloadOutline} style={{ color: '#333', marginRight: '12px', fontSize: '18px' }} />
               <IonLabel style={{ fontWeight: '500', color: '#222', fontSize: '14px' }}>Descargar</IonLabel>
               <IonIcon slot="end" icon={chevronForwardOutline} style={{ color: '#ccc', fontSize: '16px' }} />
             </IonItem>
             <IonItem button detail={false}
-              onClick={() => { setPopoverOpen(false); history.push('/detalle-archivo'); }}
+              onClick={() => {
+                setPopoverOpen(false);
+                history.push(`/detalle-archivo/${docSeleccionado}`);
+              }}
               style={{ '--padding-start': '16px', '--min-height': '52px', '--border-color': 'transparent' }}>
               <IonIcon icon={informationCircleOutline} style={{ color: '#333', marginRight: '12px', fontSize: '18px' }} />
               <IonLabel style={{ fontWeight: '500', color: '#222', fontSize: '14px' }}>Ver Información</IonLabel>
@@ -326,10 +364,10 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
             </IonItem>
           </IonList>
         </IonPopover>
- 
+
       </IonContent>
     </IonPage>
   );
 };
- 
+
 export default InicioPublico;
