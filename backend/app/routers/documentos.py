@@ -13,6 +13,19 @@ router = APIRouter(prefix="/documentos", tags=["Documentos"])
 def listar_documentos(db: Session = Depends(get_db)):
     return db.query(models.Documento).order_by(models.Documento.id.desc()).all()
 
+@router.get("/filtros")
+def obtener_filtros(db: Session = Depends(get_db)):
+    años = db.query(models.Documento.año).distinct().filter(
+        models.Documento.año != None
+    ).all()
+    areas = db.query(models.Documento.area).distinct().filter(
+        models.Documento.area != None, models.Documento.area != ''
+    ).all()
+    return {
+        "años":  sorted([a[0] for a in años], reverse=True),
+        "areas": sorted([a[0] for a in areas]),
+    }
+
 @router.get("/{doc_id}", response_model=schemas.DocumentoResponse)
 def obtener_documento(doc_id: int, db: Session = Depends(get_db)):
     doc = db.query(models.Documento).filter(models.Documento.id == doc_id).first()
@@ -39,7 +52,7 @@ async def importar_csv(
                 codigo      = row.get('Número del acto administrativo aprobatorio', ''),
                 tipo        = row.get('Tipo documento', row.get('Tipo de Compra', '')),
                 categoria   = row.get('Categoría', row.get('Tipo de Compra', '')),
-                area        = row.get('Área generadora', ''),
+                area        = row.get('Tipo de Compra', ''),
                 fecha_pub   = row.get('Fecha de publicación', row.get('Fecha del acto administrativo aprobatorio del contrato', '')),
                 descripcion = row.get('Descripción', row.get('Objeto de la contratación o adquisición', '')),
                 enlace      = row.get('Texto', row.get('Enlace al texto integro del contrato', '')),
@@ -109,15 +122,3 @@ def _generar_csv(documentos, filename: str):
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
-@router.get("/filtros")
-def obtener_filtros(db: Session = Depends(get_db)):
-    años = db.query(models.Documento.año).distinct().filter(
-        models.Documento.año != None
-    ).all()
-    areas = db.query(models.Documento.area).distinct().filter(
-        models.Documento.area != None, models.Documento.area != ''
-    ).all()
-    return {
-        "años":  sorted([a[0] for a in años], reverse=True),
-        "areas": sorted([a[0] for a in areas]),
-    }
