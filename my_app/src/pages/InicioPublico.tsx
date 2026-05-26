@@ -3,6 +3,7 @@ import {
   IonPage,
   IonContent,
   IonGrid,
+  IonSpinner,
   IonRow,
   IonCol,
   IonSelect,
@@ -35,7 +36,7 @@ import HeaderLinks from '../components/HeaderLink';
 import { gastosService } from '../services/api';
 import { documentosService } from '../services/api';
 
-/* ─── Constantes ────────────────────────────────────────────────── */
+/*  Constantes  */
 const MESES = [
   { label: 'Enero', num: 1 }, { label: 'Febrero', num: 2 }, { label: 'Marzo', num: 3 },
   { label: 'Abril', num: 4 }, { label: 'Junio', num: 6 }, { label: 'Julio', num: 7 },
@@ -45,11 +46,7 @@ const MESES = [
 
 const PIE_COLORS = ['#2a6095', '#1a9cd8', '#4ab8e8', '#3d7abf'];
 
-
-
-//const archivos = Array.from({ length: 6 }, (_, i) => `Archivo ${i + 1}`);
-
-/* ─── Helpers ───────────────────────────────────────────────────── */
+/*  Helpers  */
 const renderPieLegend = (pieData: any[]) => (
   <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '8px' }}>
     {pieData.map((entry, i) => (
@@ -74,13 +71,13 @@ const renderCustomLabel = ({ cx, cy, midAngle, outerRadius, name, value }: any) 
   );
 };
 
-/* ─── Props ─────────────────────────────────────────────────────── */
+/*  Props  */
 interface InicioPublicoProps {
   userRole?: 'ciudadano' | 'admin' | null;
   isAuth?: boolean;
 }
 
-/* ─── Componente ────────────────────────────────────────────────── */
+/*  Componente  */
 const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false }) => {
   const history = useHistory();
 
@@ -93,8 +90,13 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
   const [pieData, setPieData]           = useState<any[]>([]);
   const [documentos, setDocumentos]     = useState<any[]>([]);
   const [docSeleccionado, setDocSeleccionado] = useState<number | null>(null);
+  const [cargando, setCargando] = useState(true);
 
-  // ── abrirMenu debe estar AQUÍ dentro ──
+  const [años, setAños]   = useState<string[]>(['2025', '2026']);
+  const [areas, setAreas] = useState<string[]>(['Total', 'Salud', 'Compras']);
+
+  const [version, setVersion] = useState(0);
+
   const abrirMenu = (e: React.MouseEvent, id: number) => {
     e.persist();
     setDocSeleccionado(id);
@@ -128,9 +130,9 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
       }
     };
     cargar();
-  }, [selectedYear, compareYear, selectedArea]);
+  }, [selectedYear, compareYear, selectedArea, version]);
 
-  /* ── Cargar pie ── */
+  /*  Cargar pie  */
   useEffect(() => {
     const cargar = async () => {
       try {
@@ -151,13 +153,44 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
       }
     };
     cargar();
-  }, [selectedYear]);
+  }, [selectedYear, version]);
 
-  /*Carga Lista*/
+  /*  filtros  */
   useEffect(() => {
-  documentosService.listar()
-    .then(data => setDocumentos(data))
-    .catch(() => {});
+    documentosService.filtros()
+      .then(data => {
+        setAños(data.años.map(String));
+        setAreas(['Total', ...data.areas]);
+      })
+      .catch(() => {});
+  }, [version]);
+
+  /*  Documentos  */
+  useEffect(() => {
+    const cargar = async () => {
+      try {
+        const data = await documentosService.listar();
+        setDocumentos(data);
+      } catch {
+        setDocumentos([]);
+      } finally {
+        setCargando(false);
+      }
+    };
+    cargar();
+  }, [version]);
+
+  /*  Notificacion  */
+  useEffect(() => {
+    const verificar = () => {
+      const ultima = localStorage.getItem('ultima_importacion');
+      if (ultima && Number(ultima) > Date.now() - 5000) {
+        setVersion(v => v + 1);
+        localStorage.removeItem('ultima_importacion');
+      }
+    };
+    const intervalo = setInterval(verificar, 1000);
+    return () => clearInterval(intervalo);
   }, []);
 
   const selectStyle: React.CSSProperties & Record<string, any> = {
@@ -187,9 +220,9 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
         }}>
           <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
             {[
-              { label: 'Año',          value: selectedYear, setter: setSelectedYear, options: [['2025','2025'],['2026','2026']],                                              minWidth: '110px' },
-              { label: 'Comparar con', value: compareYear,  setter: setCompareYear,  options: [['Comparar','Comparar'],['2025','2025'],['2026','2026']],                      minWidth: '150px' },
-              { label: 'Area',         value: selectedArea, setter: setSelectedArea, options: [['Total','Total'],['Salud','Salud'],['Compras','Compras Bienes y Servicios']], minWidth: '140px' },
+                { label: 'Año',          value: selectedYear, setter: setSelectedYear, options: años.map(a => [a, a]),                                    minWidth: '110px' },
+                { label: 'Comparar con', value: compareYear,  setter: setCompareYear,  options: [['Comparar','Comparar'], ...años.map(a => [a, a])],       minWidth: '150px' },
+                { label: 'Area',         value: selectedArea, setter: setSelectedArea, options: areas.map(a => [a, a]),                                   minWidth: '140px' },
             ].map(({ label, value, setter, options, minWidth }) => (
               <div key={label} style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '13px', marginBottom: '8px', fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}>{label}</span>
@@ -205,6 +238,8 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
               onClick={() => {
                 if (isAuth && userRole === 'ciudadano') {
                   history.push('/app/perfil');
+                } else if (isAuth && userRole === 'admin') {
+                  history.push('/admin/perfil');  // ← faltaba este caso
                 } else {
                   history.push('/registro');
                 }
@@ -220,6 +255,11 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
         </div>
 
         {/* Contenido  */}
+        {cargando ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}>
+            <IonSpinner name="crescent" style={{ color: '#15305b' }} />
+          </div>
+        ) : (
         <IonGrid style={{ marginTop: '-80px', padding: '0 20px 30px 20px' }}>
 
           <IonRow>
@@ -315,24 +355,40 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
 
           {/* Lista */}
 
-          {documentos.map((doc) => (
-            <IonItem key={doc.id} button detail={false} style={{
-              '--padding-start': '24px', '--padding-end': '16px',
-              '--min-height': '58px', '--border-color': '#ebebeb',
-            }}>
-              <IonLabel style={{ fontWeight: '500', color: '#2a2a2a', fontSize: '15px' }}>
-                {doc.descripcion ?? doc.codigo ?? `Documento ${doc.id}`}
-              </IonLabel>
-              <IonIcon
-                slot="end"
-                icon={reorderThreeOutline}
-                style={{ color: '#aaa', fontSize: '22px', cursor: 'pointer' }}
-                onClick={(e) => { e.stopPropagation(); abrirMenu(e as any, doc.id); }}
-              />
-            </IonItem>
-          ))}
+          <IonRow>
+            <IonCol size="12">
+              <IonCard style={{ borderRadius: '16px', margin: '0', border: '1px solid #e0e0e0', boxShadow: 'none', overflow: 'hidden' }}>
+                <IonList lines="full" style={{ padding: 0 }}>
+                  {documentos.length === 0 ? (
+                    <IonItem>
+                      <IonLabel style={{ color: '#888', fontSize: '14px' }}>
+                        No hay documentos disponibles.
+                      </IonLabel>
+                    </IonItem>
+                  ) : (
+                    documentos.map((doc) => (
+                      <IonItem key={doc.id} button detail={false} style={{
+                        '--padding-start': '24px', '--padding-end': '16px',
+                        '--min-height': '58px', '--border-color': '#ebebeb',
+                      }}>
+                        <IonLabel style={{ fontWeight: '500', color: '#2a2a2a', fontSize: '15px' }}>
+                          {doc.descripcion ?? doc.codigo ?? `Documento ${doc.id}`}
+                        </IonLabel>
+                        <IonIcon
+                          slot="end"
+                          icon={reorderThreeOutline}
+                          style={{ color: '#aaa', fontSize: '22px', cursor: 'pointer' }}
+                          onClick={(e) => { e.stopPropagation(); abrirMenu(e as any, doc.id); }}
+                        />
+                      </IonItem>
+                    ))
+                  )}
+                </IonList>
+              </IonCard>
+            </IonCol>
+          </IonRow>
 
-        </IonGrid>
+        </IonGrid>)}
 
         {/* ── MENÚ CONTEXTUAL ── */}
         <IonPopover

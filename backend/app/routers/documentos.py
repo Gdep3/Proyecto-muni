@@ -51,6 +51,21 @@ async def importar_csv(
         except Exception:
             continue
 
+        try:
+            monto_str = re.sub(r'[^\d]', '', row.get('Monto total de la operación', '0'))
+            monto = int(monto_str) if monto_str else 0
+            
+            if monto > 0 and año_val.isdigit():
+                gasto = models.Gasto(
+                    año   = int(año_val),
+                    mes   = _mes_a_numero(mes_val),
+                    area  = row.get('Tipo de Compra', 'Sin categoría'),
+                    monto = monto,
+                )
+                db.add(gasto)
+        except Exception:
+            pass
+
     db.commit()
     return {"mensaje": f"{insertados} documentos importados"}
 
@@ -93,3 +108,16 @@ def _generar_csv(documentos, filename: str):
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+@router.get("/filtros")
+def obtener_filtros(db: Session = Depends(get_db)):
+    años = db.query(models.Documento.año).distinct().filter(
+        models.Documento.año != None
+    ).all()
+    areas = db.query(models.Documento.area).distinct().filter(
+        models.Documento.area != None, models.Documento.area != ''
+    ).all()
+    return {
+        "años":  sorted([a[0] for a in años], reverse=True),
+        "areas": sorted([a[0] for a in areas]),
+    }

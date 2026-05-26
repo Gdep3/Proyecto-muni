@@ -77,6 +77,7 @@ const AdminDashboard: React.FC = () => {
                 });
                 const data = await res.json();
                 alert(data.mensaje);
+                localStorage.setItem('ultima_importacion', Date.now().toString());
               } catch {
                 alert('Error al importar el archivo');
               }

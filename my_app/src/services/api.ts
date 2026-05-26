@@ -1,5 +1,6 @@
 const BASE_URL = 'http://localhost:8000';
 
+
 //Helper: fetch con JWT automático
 const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('token');
@@ -127,4 +128,14 @@ export const documentosService = {
   descargarUno: (id: number) => {
     window.open(`http://localhost:8000/documentos/descargar/${id}`, '_blank');
   },
+   filtros: () => apiFetch('/documentos/filtros'),
+};
+
+export const perfilService = {
+  obtener: () => apiFetch('/auth/me'),
+  actualizar: (datos: { email?: string; comuna?: string }) =>
+    apiFetch('/auth/me', {
+      method: 'PUT',
+      body: JSON.stringify(datos),
+    }),
 };
