@@ -1,42 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  IonPage, IonHeader, IonToolbar, IonContent, IonButton, IonIcon,
+  IonPage, IonHeader, IonToolbar, IonContent, IonButton, IonIcon, IonSpinner,
 } from '@ionic/react';
 import { personOutline, arrowBackOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import HeaderLinks from '../components/HeaderLink';
-
-const solicitudes = [
-  { folio: '#45192', asunto: 'Ejecución presupuestaria Q1 2026',    fecha: '10/05/2026', estado: 'Pendiente'  },
-  { folio: '#45120', asunto: 'Certificado de Obras (Ampliación)',   fecha: '15/04/2026', estado: 'Respondida' },
-  { folio: '#45088', asunto: 'Detalle Gasto Salud Marzo 2026',      fecha: '02/04/2026', estado: 'Respondida' },
-  { folio: '#45071', asunto: 'Comparativa Presupuesto Obras 2024-2025', fecha: '28/03/2026', estado: 'Pendiente' },
-];
+import { solicitudesService } from '../services/api';
 
 const badgeColor: Record<string, { bg: string; color: string }> = {
-  Pendiente:  { bg: '#fff3cd', color: '#856404' },
-  Respondida: { bg: '#d1e7dd', color: '#0f5132' },
+  pendiente:  { bg: '#fff3cd', color: '#856404' },
+  respondida: { bg: '#d1e7dd', color: '#0f5132' },
 };
 
 const AdminGestion: React.FC = () => {
   const history = useHistory();
-  const [filtro, setFiltro] = useState('Todos');
+  const [solicitudes, setSolicitudes] = useState<any[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState('');
+  const [filtro, setFiltro]           = useState('Todos');
 
-  const filtrados = filtro === 'Todos'
+  useEffect(() => {
+    solicitudesService.listar()
+      .then(data => setSolicitudes(data))
+      .catch(() => setError('Error al cargar las solicitudes'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtradas = filtro === 'todos'
     ? solicitudes
     : solicitudes.filter(s => s.estado === filtro);
 
   return (
     <IonPage>
-      <HeaderLinks/>
+      <IonHeader className="ion-no-border">
+        <IonToolbar style={{ '--background': '#15305b' }}>
+          <div style={{
+            display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
+            gap: '28px', padding: '10px 30px', fontSize: '13px', color: '#ffffff',
+            borderBottom: '1px solid rgba(255,255,255,0.15)',
+          }}>
+            <span style={{ cursor: 'pointer' }}>Plataforma Ley Lobby</span>
+            <span style={{ cursor: 'pointer' }}>Transparencia Activa</span>
+            <span style={{ cursor: 'pointer' }}>Solicitud Ley de Transparencia</span>
+            <span style={{ cursor: 'pointer' }}>Decretos</span>
+            <span style={{ color: '#f1c40f', fontWeight: 'bold', cursor: 'pointer' }}>Consejo Municipal en VIVO</span>
+          </div>
+        </IonToolbar>
+      </IonHeader>
 
       <IonContent style={{ '--background': '#f0f2f5' }}>
-
-        {/* ── FRANJA AZUL ── */}
         <div style={{
-          backgroundColor: '#15305b', padding: '28px 30px 100px 30px',
-          color: 'white', display: 'flex', justifyContent: 'space-between',
-          alignItems: 'flex-start', borderBottomRightRadius: '80px',
+          backgroundColor: '#15305b', padding: '28px 30px 100px 30px', color: 'white',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+          borderBottomRightRadius: '80px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <IonButton fill="clear" onClick={() => history.push('/admin/dashboard')}
@@ -58,80 +73,99 @@ const AdminGestion: React.FC = () => {
           </IonButton>
         </div>
 
-        {/* ── CONTENIDO ── */}
         <div style={{ marginTop: '-70px', padding: '0 24px 40px 24px' }}>
-
-          {/* Card tabla */}
           <div style={{
             backgroundColor: 'white', borderRadius: '16px',
             boxShadow: '0 4px 14px rgba(0,0,0,0.08)', overflow: 'hidden',
           }}>
-            {/* Header de la card con filtro */}
+            {/* Header con filtro */}
             <div style={{
-              padding: '20px 24px', display: 'flex',
-              justifyContent: 'space-between', alignItems: 'center',
-              borderBottom: '1px solid #f0f0f0',
+              padding: '20px 24px', display: 'flex', justifyContent: 'space-between',
+              alignItems: 'center', borderBottom: '1px solid #f0f0f0',
             }}>
               <h3 style={{ margin: 0, fontWeight: '700', color: '#1a1a2e', fontSize: '16px' }}>
                 Gestión de Solicitudes
               </h3>
-              <select
-                value={filtro}
-                onChange={e => setFiltro(e.target.value)}
+              <select value={filtro} onChange={e => setFiltro(e.target.value)}
                 style={{
                   padding: '8px 14px', borderRadius: '10px', border: '1px solid #ddd',
                   fontSize: '13px', color: '#333', backgroundColor: '#f9f9f9', outline: 'none',
-                }}
-              >
-                <option value="Todos">Todos los estados</option>
-                <option value="Pendiente">Pendiente</option>
-                <option value="Respondida">Respondida</option>
+                }}>
+                <option value="todos">Todos los estados</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="respondida">Respondida</option>
               </select>
             </div>
 
-            {/* Tabla */}
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8f9fa' }}>
-                    {['Folio', 'Asunto', 'Ingreso', 'Estado', 'Acción'].map(h => (
-                      <th key={h} style={{
-                        padding: '14px 20px', textAlign: 'left', fontWeight: '600',
-                        color: '#555', fontSize: '12px', textTransform: 'uppercase',
-                        letterSpacing: '0.5px', borderBottom: '1px solid #eee',
-                      }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtrados.map((s, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #f5f5f5' }}>
-                      <td style={{ padding: '16px 20px', fontWeight: '600', color: '#15305b' }}>{s.folio}</td>
-                      <td style={{ padding: '16px 20px', color: '#333' }}>{s.asunto}</td>
-                      <td style={{ padding: '16px 20px', color: '#777' }}>{s.fecha}</td>
-                      <td style={{ padding: '16px 20px' }}>
-                        <span style={{
-                          padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
-                          backgroundColor: badgeColor[s.estado].bg, color: badgeColor[s.estado].color,
-                        }}>
-                          {s.estado}
-                        </span>
-                      </td>
-                      <td style={{ padding: '16px 20px' }}>
-                        <button style={{
-                          padding: '6px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                          fontSize: '13px', fontWeight: '600',
-                          backgroundColor: s.estado === 'Pendiente' ? '#15305b' : '#f0f2f5',
-                          color: s.estado === 'Pendiente' ? 'white' : '#555',
-                        }}>
-                          {s.estado === 'Pendiente' ? 'Gestionar' : 'Ver'}
-                        </button>
-                      </td>
+            {loading && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                <IonSpinner name="crescent" style={{ color: '#15305b' }} />
+              </div>
+            )}
+
+            {error && (
+              <div style={{ padding: '20px', color: '#842029', backgroundColor: '#f8d7da' }}>
+                {error}
+              </div>
+            )}
+
+            {!loading && !error && filtradas.length === 0 && (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
+                No hay solicitudes para mostrar.
+              </div>
+            )}
+
+            {!loading && !error && filtradas.length > 0 && (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8f9fa' }}>
+                      {['Folio', 'Asunto', 'Ingreso', 'Estado', 'Acción'].map(h => (
+                        <th key={h} style={{
+                          padding: '14px 20px', textAlign: 'left', fontWeight: '600',
+                          color: '#555', fontSize: '12px', textTransform: 'uppercase',
+                          letterSpacing: '0.5px', borderBottom: '1px solid #eee',
+                        }}>{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filtradas.map((s) => {
+                      const cfg = badgeColor[s.estado] ?? { bg: '#e9ecef', color: '#495057' };
+                      return (
+                        <tr key={s.id} style={{ borderBottom: '1px solid #f5f5f5' }}>
+                          <td style={{ padding: '16px 20px', fontWeight: '600', color: '#15305b' }}>{s.folio}</td>
+                          <td style={{ padding: '16px 20px', color: '#333' }}>{s.asunto}</td>
+                          <td style={{ padding: '16px 20px', color: '#777' }}>
+                            {new Date(s.created_at).toLocaleDateString('es-CL')}
+                          </td>
+                          <td style={{ padding: '16px 20px' }}>
+                            <span style={{
+                              padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
+                              backgroundColor: cfg.bg, color: cfg.color,
+                            }}>
+                              {s.estado.charAt(0).toUpperCase() + s.estado.slice(1)}
+                            </span>
+                          </td>
+                          <td style={{ padding: '16px 20px' }}>
+                            <button
+                              onClick={() => history.push(`/admin/gestion/${s.id}`)}
+                              style={{
+                                padding: '6px 16px', borderRadius: '8px', border: 'none',
+                                cursor: 'pointer', fontSize: '13px', fontWeight: '600',
+                                backgroundColor: s.estado === 'pendiente' ? '#15305b' : '#f0f2f5',
+                                color: s.estado === 'pendiente' ? 'white' : '#555',
+                              }}>
+                              {s.estado === 'pendiente' ? 'Gestionar' : 'Ver'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </IonContent>

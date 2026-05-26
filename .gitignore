@@ -1,0 +1,67 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/dist
+
+#Variables de entorno
+backend/.env
+.venv/
+
+backend/.env
+**/__pycache__/
+**/*.pyc
+.vscode/
+
+# Dependencias instaladas
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/routers/__pycache__/
+*.pyc
+*.pyo
+
+# Ionic / Capacitor
+.ionic/
+android/
+ios/
+
+# Frontend node_modules (más específico)
+my_app/node_modules/
+
+# Python cache más completo
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+*.pyd
+.Python
+
+# Entorno virtual en cualquier ubicación
+.venv/
+venv/
+env/
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+/.nx
+/.nx/cache
+/.vscode/*
+!/.vscode/extensions.json
+.idea
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional eslint cache
+.eslintcache

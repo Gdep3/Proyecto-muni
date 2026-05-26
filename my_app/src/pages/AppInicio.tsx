@@ -52,12 +52,7 @@ const AppInicio: React.FC = () => {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
-            <IonButton color="light" style={{
-              width: '48px', height: '48px', '--border-radius': '50%',
-              '--padding-start': '0', '--padding-end': '0',
-            }}>
-              <IonIcon icon={shareOutline} style={{ color: '#15305b', fontSize: '22px' }} />
-            </IonButton>
+            
             <IonButton
               color="light"
               onClick={() => history.push('/app/perfil')}   // <-- cambia esto

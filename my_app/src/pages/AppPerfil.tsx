@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonContent, IonButton, IonIcon,
 } from '@ionic/react';
@@ -8,6 +8,8 @@ import {
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import HeaderLinks from '../components/HeaderLink';
+import { perfilService } from '../services/api';
+
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '11px 16px', borderRadius: '10px',
@@ -30,13 +32,41 @@ const labelStyle: React.CSSProperties = {
 
 interface AppPerfilProps {
   onLogout?: () => void;
+  backRoute?: string;
 }
 
-const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout }) => {
+const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout, backRoute = '/app/inicio' }) => {
   const history = useHistory();
-  const [email, setEmail]     = useState('ana.lopez@ejemplo.cl');
-  const [comuna, setComuna]   = useState('Santo Domingo');
+  const [usuario, setUsuario] = useState<any>(null);
+  const [email, setEmail]     = useState('');
+  const [comuna, setComuna]   = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const [mensaje, setMensaje]     = useState('');
 
+  const handleGuardar = async () => {
+    setGuardando(true);
+    setMensaje('');
+    try {
+      await perfilService.actualizar({ email, comuna });
+      setMensaje('Cambios guardados correctamente');
+    } catch (err: any) {
+      setMensaje(err?.response?.data?.detail ?? 'Error al guardar');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  // Cargar datos reales del usuario logueado
+  useEffect(() => {
+    perfilService.obtener()
+      .then(data => {
+        setUsuario(data);
+        setEmail(data.email);
+        setComuna(data.comuna ?? '');
+      })
+      .catch(() => {});
+  }, []);
+  
   return (
     <IonPage>
       {/* ── BARRA SUPERIOR ── */}
@@ -51,7 +81,7 @@ const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout }) => {
           alignItems: 'flex-start', borderBottomRightRadius: '80px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <IonButton fill="clear" onClick={() => history.push('/app/inicio')}
+            <IonButton fill="clear" onClick={() => history.push(backRoute)}
               style={{ '--padding-start': '0', '--padding-end': '8px', '--color': 'rgba(255,255,255,0.8)' }}>
               <IonIcon icon={arrowBackOutline} style={{ fontSize: '20px' }} />
             </IonButton>
@@ -87,8 +117,12 @@ const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout }) => {
                 <IonIcon icon={personCircleOutline} style={{ color: '#15305b', fontSize: '44px' }} />
               </div>
               <div>
-                <p style={{ margin: 0, fontWeight: '700', color: '#1a1a2e', fontSize: '17px' }}>Ana López</p>
-                <p style={{ margin: '3px 0 0', color: '#888', fontSize: '13px' }}>Ciudadano Registrado</p>
+                <p style={{ margin: 0, fontWeight: '700', color: '#1a1a2e', fontSize: '17px' }}>
+                  {usuario?.nombre ?? 'Cargando...'}
+                </p>
+                <p style={{ margin: '3px 0 0', color: '#888', fontSize: '13px' }}>
+                  {usuario?.rol === 'admin' ? 'Administrador' : 'Ciudadano Registrado'}
+                </p>
               </div>
             </div>
 
@@ -107,7 +141,7 @@ const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout }) => {
                   <IonIcon icon={cardOutline} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                   RUT
                 </label>
-                <input type="text" value="12.345.678-9" disabled style={inputDisabledStyle} />
+                <input type="text" value={usuario?.rut ?? ''} disabled style={inputDisabledStyle} />
               </div>
 
               {/* Email */}
@@ -138,14 +172,28 @@ const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout }) => {
                 />
               </div>
 
+              {mensaje && (
+                <div style={{
+                  padding: '10px 14px', borderRadius: '10px', marginBottom: '16px',
+                  fontSize: '13px',
+                  backgroundColor: mensaje.includes('Error') ? '#f8d7da' : '#d1e7dd',
+                  color: mensaje.includes('Error') ? '#842029' : '#0f5132',
+                }}>
+                  {mensaje}
+                </div>
+              )}
+
               <button
                 type="button"
+                onClick={handleGuardar}
+                disabled={guardando}
                 style={{
                   width: '100%', padding: '13px', backgroundColor: '#15305b', color: 'white',
-                  border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer',
+                  border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '600',
+                  cursor: guardando ? 'not-allowed' : 'pointer', opacity: guardando ? 0.7 : 1,
                 }}
               >
-                Guardar Cambios
+                {guardando ? 'Guardando...' : 'Guardar Cambios'}
               </button>
             </div>
 
@@ -156,7 +204,12 @@ const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout }) => {
             }}>
               <button
                 type="button"
-                onClick={() => { onLogout?.(); history.replace('/inicio'); }}
+                onClick={() => {
+                  onLogout?.();
+                  setTimeout(() => {
+                    history.replace('/inicio');
+                  }, 50);
+                }}
                 style={{
                   width: '100%', padding: '13px', backgroundColor: 'transparent', color: '#e74c3c',
                   border: '1px solid #e74c3c', borderRadius: '12px', fontSize: '14px',

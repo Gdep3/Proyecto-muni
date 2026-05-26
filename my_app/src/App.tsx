@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
+import { authService } from './services/api';
 
 // 1. PÁGINAS PÚBLICAS
 import Login from './pages/Login';
@@ -21,11 +22,11 @@ import AppPerfil from './pages/AppPerfil';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminGestion from './pages/AdminGestion';
 import AdminUsuario from './pages/AdminUsuario';
+import DetalleSolicitud from './pages/DetalleSolicitud';
+import AdminGestionDetalle from './pages/AdminGestionDetalle';
 
-// Componente de Ruta Protegida (Lo creamos en el paso anterior)
 import PrivateRoute from './routes/PrivateRoute';
 
-// CSS nativo de Ionic
 import '@ionic/react/css/core.css';
 import '@ionic/react/css/normalize.css';
 import '@ionic/react/css/structure.css';
@@ -40,38 +41,77 @@ import '@ionic/react/css/display.css';
 setupIonicReact();
 
 const App: React.FC = () => {
-  // Simulación de estados de sesión según tu arquitectura
-  const [isAuth, setIsAuth] = useState(false); 
-  const [userRole, setUserRole] = useState<'ciudadano' | 'admin'>('ciudadano');
+  const [isAuth, setIsAuth]     = useState(authService.isAuth());
+  const [userRole, setUserRole] = useState<'ciudadano' | 'admin'>(
+    authService.getRol() ?? 'ciudadano'
+  );
+
+  const handleLogout = () => {
+    authService.logout();
+    setIsAuth(false);
+    setUserRole('ciudadano');
+  };
 
   return (
     <IonApp>
       <IonReactRouter>
-        <IonRouterOutlet>
-          
-          {/*RAÍZ PÚBLICA*/}
-          <Route exact path="/inicio" render={() => <InicioPublico userRole={isAuth ? userRole : null} />} />
-   
+        <IonRouterOutlet animated={false}>
+
+          {/* ── RUTAS PÚBLICAS ── */}
+          <Route exact path="/inicio" render={() => (
+            <InicioPublico userRole={isAuth ? userRole : null} isAuth={isAuth} />
+          )} />
           <Route exact path="/login" render={() => (
             <Login onLogin={(role) => { setIsAuth(true); setUserRole(role); }} />
           )} />
-          <Route exact path="/lista-ampliada" component={ListaArchivoAmpliada} />
-          <Route exact path="/registro" component={Registro} />
-          <Route exact path="/detalle-archivo" component={DetalleArchivo} />
-          <Route exact path="/grafico-ampliado" component={GraficoAmpliado} />
-          
-          {/*ÁREA PRIVADA - ROL CIUDADANO (/app) */}
-          <PrivateRoute exact path="/app/inicio" component={AppInicio} isAuthenticated={isAuth} />
-          <PrivateRoute exact path="/app/solicitudes" component={AppSolicitudes} isAuthenticated={isAuth} />
-          <PrivateRoute exact path="/app/solicitudes/nueva" component={AppNuevaSolicitud} isAuthenticated={isAuth} />
-          <PrivateRoute exact path="/app/perfil" component={AppPerfil} isAuthenticated={isAuth} />
+          <Route exact path="/registro"              component={Registro} />
+          <Route exact path="/lista-ampliada"        component={ListaArchivoAmpliada} />
+          <Route exact path="/detalle-archivo/:id"   component={DetalleArchivo} />
+          <Route exact path="/grafico-ampliado"      component={GraficoAmpliado} />
 
-          {/*aREA PRIVADA - ROL FUNCIONARIO (/admin)*/}
-          <PrivateRoute exact path="/admin/dashboard" component={AdminDashboard} isAuthenticated={isAuth} />
-          <PrivateRoute exact path="/admin/gestion" component={AdminGestion} isAuthenticated={isAuth} />
-          <PrivateRoute exact path="/admin/usuarios" component={AdminUsuario} isAuthenticated={isAuth} />
+          {/* ── RUTAS CIUDADANO ── */}
+          <PrivateRoute exact path="/app/inicio"
+            component={AppInicio}
+            isAuthenticated={isAuth} requiredRole="ciudadano" userRole={userRole} />
+          <PrivateRoute exact path="/app/solicitudes"
+            component={AppSolicitudes}
+            isAuthenticated={isAuth} requiredRole="ciudadano" userRole={userRole} />
+          <PrivateRoute exact path="/app/solicitudes/nueva"
+            component={AppNuevaSolicitud}
+            isAuthenticated={isAuth} requiredRole="ciudadano" userRole={userRole} />
+          <PrivateRoute exact path="/app/solicitudes/:id"
+            component={DetalleSolicitud}
+            isAuthenticated={isAuth} requiredRole="ciudadano" userRole={userRole} />
+          <PrivateRoute
+            exact path="/app/perfil"
+            render={() => <AppPerfil onLogout={handleLogout} backRoute="/app/inicio" />}
+            isAuthenticated={isAuth}
+            requiredRole="ciudadano"
+            userRole={userRole}
+          />
 
-          {/*REDIRECCIÓN POR DEFECTO*/}
+          {/* ── RUTAS ADMIN ── */}
+          <PrivateRoute exact path="/admin/dashboard"
+            component={AdminDashboard}
+            isAuthenticated={isAuth} requiredRole="admin" userRole={userRole} />
+          <PrivateRoute exact path="/admin/gestion"
+            component={AdminGestion}
+            isAuthenticated={isAuth} requiredRole="admin" userRole={userRole} />
+          <PrivateRoute exact path="/admin/gestion/:id"
+            component={AdminGestionDetalle}
+            isAuthenticated={isAuth} requiredRole="admin" userRole={userRole} />
+          <PrivateRoute exact path="/admin/usuarios"
+            component={AdminUsuario}
+            isAuthenticated={isAuth} requiredRole="admin" userRole={userRole} />
+         <PrivateRoute
+            exact path="/admin/perfil"
+            render={() => <AppPerfil onLogout={handleLogout} backRoute="/admin/dashboard" />}
+            isAuthenticated={isAuth}
+            requiredRole="admin"
+            userRole={userRole}
+          />
+
+          {/* ── REDIRECCIÓN POR DEFECTO ── */}
           <Route exact path="/">
             <Redirect to="/inicio" />
           </Route>
