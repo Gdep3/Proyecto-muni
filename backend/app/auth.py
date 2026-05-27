@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import jwt
 from jwt.exceptions import InvalidTokenError
-from passlib.context import CryptContext
+import bcrypt # <-- Importamos bcrypt directo, adiós passlib
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -16,20 +16,27 @@ SECRET_KEY = os.getenv("SECRET_KEY", "clave_secreta_por_defecto")
 ALGORITHM  = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 
-# Contexto bcrypt para hashear contraseñas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# Esquema OAuth2 — busca el token en el header Authorization: Bearer <token>
+# Esquema OAuth2
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-
-# ─── Contraseñas ─────────────────────────────────────────────────
+# ─── Contraseñas (Usando bcrypt directamente) ───────────────────
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    # bcrypt requiere que la contraseña esté en bytes
+    pwd_bytes = password.encode('utf-8')
+    # Genera la "sal" (salt) y luego el hash final
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(pwd_bytes, salt)
+    # Lo devolvemos como un string normal para guardarlo en la Base de Datos
+    return hashed_password.decode('utf-8')
 
-def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    # Convertimos ambos a bytes para que bcrypt pueda compararlos
+    plain_password_bytes = plain_password.encode('utf-8')
+    hashed_password_bytes = hashed_password.encode('utf-8')
+    
+    # Compara de forma segura y devuelve True si coinciden
+    return bcrypt.checkpw(plain_password_bytes, hashed_password_bytes)
 
 
 # ─── JWT ─────────────────────────────────────────────────────────

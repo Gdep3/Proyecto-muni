@@ -39,7 +39,7 @@ class UsuarioResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True  # v1 usa orm_mode en vez de from_attributes
+        from_attributes = True
 
 
 # Auth
@@ -82,7 +82,7 @@ class SolicitudResponse(BaseModel):
     updated_at: Optional[datetime]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Gastos
 
@@ -94,7 +94,7 @@ class GastoResponse(BaseModel):
     monto: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Documentos
 
@@ -111,4 +111,4 @@ class DocumentoResponse(BaseModel):
     mes:         Optional[int]
 
     class Config:
-        orm_mode = True
+        from_attributes = True

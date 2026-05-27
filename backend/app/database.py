@@ -6,7 +6,7 @@ import os
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = "mysql+pymysql://root:ProyectoMuni1%IBJ@127.0.0.1:3306/santo_domingo_db"
 
 engine = create_engine(DATABASE_URL)
 
