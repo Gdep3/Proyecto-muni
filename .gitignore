@@ -1,0 +1,32 @@
+# ─── DEPENDENCIAS Y COMPILADOS (Frontend y Backend) ───
+node_modules/
+dist/
+build/
+www/
+.nx/
+coverage/
+.pnp*
+
+# ─── VARIABLES DE ENTORNO (¡CRÍTICO PARA SEGURIDAD!) ───
+.env
+.env.*
+!.env.example
+
+# ─── LOGS Y CACHÉ ───
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.eslintcache
+
+# ─── SISTEMA Y EDITORES ───
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
