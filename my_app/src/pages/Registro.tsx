@@ -45,7 +45,9 @@ const Registro: React.FC = () => {
         rut,
         nombre,
         correo,
-        contrasena
+        contrasena,
+        region,
+        comuna
       });
 
       if (data.success) {

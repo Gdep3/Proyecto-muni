@@ -17,6 +17,8 @@ interface Usuario extends RowDataPacket {
   nombre: string;
   correo: string;
   rol: 'admin' | 'ciudadano';
+  region?: string;
+  comuna?: string;
 }
 
 // Configuración de la base de datos
@@ -69,10 +71,10 @@ app.post('/api/login', async (req: Request, res: Response): Promise<void> => {
 
 // Endpoint para Registrar un Nuevo Ciudadano
 app.post('/api/registro', async (req: Request, res: Response): Promise<void> => {
-  const { rut, nombre, correo, contrasena } = req.body;
+  // Ahora extraemos también region y comuna del req.body
+  const { rut, nombre, correo, contrasena, region, comuna } = req.body;
 
   try {
-    // 1. Verificamos si el RUT o el correo ya están registrados en Clever Cloud
     const [usuariosExistentes] = await db.query<Usuario[]>(
       'SELECT rut FROM usuarios WHERE rut = ? OR correo = ?', 
       [rut, correo]
@@ -86,11 +88,10 @@ app.post('/api/registro', async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // 2. Insertamos el nuevo registro en la base de datos
-    // Nota: Por defecto, todos los que se registran por aquí tienen el rol 'ciudadano'
+    // Actualizamos el INSERT para incluir las nuevas columnas
     await db.query(
-      'INSERT INTO usuarios (rut, nombre, correo, contrasena, rol) VALUES (?, ?, ?, ?, "ciudadano")',
-      [rut, nombre, correo, contrasena]
+      'INSERT INTO usuarios (rut, nombre, correo, contrasena, rol, region, comuna) VALUES (?, ?, ?, ?, "ciudadano", ?, ?)',
+      [rut, nombre, correo, contrasena, region, comuna]
     );
 
     res.json({ 

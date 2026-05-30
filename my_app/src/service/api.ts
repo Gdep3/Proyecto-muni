@@ -21,7 +21,14 @@ export const authService = {
       throw error.response?.data || { success: false, message: 'Error de conexión con el servidor' };
     }
   },
-  register: async (datosUsuario: { rut: string; nombre: string; correo: string; contrasena: string }) => {
+  register: async (datosUsuario: { 
+    rut: string; 
+    nombre: string; 
+    correo: string; 
+    contrasena: string; 
+    region: string;
+    comuna: string;
+  }) => {
     try {
       const response = await apiClient.post('/registro', datosUsuario);
       return response.data;
