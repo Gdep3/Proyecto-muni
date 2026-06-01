@@ -2,63 +2,58 @@ import React, { useState } from 'react';
 import { IonPage, IonContent, IonButton, IonIcon } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import { authService } from '../services/api';
+import { authService } from '../service/api'; // Importamos tu servicio de API
 
 const Registro: React.FC = () => {
   const history = useHistory();
-  const [terminosAceptados, setTerminosAceptados] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
-  const [exito, setExito]     = useState(false);
-
-  const [form, setForm] = useState({
-    nombre: '', rut: '', email: '',
-    region: '', comuna: '', password: '', confirmar: '',
-  });
   
-    const validar = () => {
-    if (!form.nombre.trim()) return 'El nombre es obligatorio';
-    if (!/^\d{7,8}-[\dkK]$/.test(form.rut.replace(/\./g, '')))
-      return 'RUT inválido. Formato: 12345678-9';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      return 'Email inválido';
-    if (form.password.length < 6)
-      return 'La contraseña debe tener al menos 6 caracteres';
-    if (form.password !== form.confirmar)
-      return 'Las contraseñas no coinciden';
-    return null;
-    };
+  // 1. Estados para capturar todos los campos del formulario
+  const [nombre, setNombre] = useState('');
+  const [rut, setRut] = useState('');
+  const [correo, setCorreo] = useState('');
+  const [region, setRegion] = useState('');
+  const [comuna, setComuna] = useState('');
+  const [contrasena, setContrasena] = useState('');
+  const [confirmarContrasena, setConfirmarContrasena] = useState('');
+  const [terminosAceptados, setTerminosAceptados] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  // Estados de control de la petición
+  const [errorMsg, setErrorMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
+  // 2. Función asíncrona para enviar los datos
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errorValidacion = validar();
-    if (errorValidacion) { setError(errorValidacion); return; }
+    setErrorMsg('');
 
-    if (form.password !== form.confirmar) {
-      setError('Las contraseñas no coinciden');
+    // Validación básica: las contraseñas deben ser iguales
+    if (contrasena !== confirmarContrasena) {
+      setErrorMsg('Las contraseñas no coinciden.');
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
+
     try {
-      await authService.register({
-        nombre:   form.nombre,
-        rut:      form.rut,
-        email:    form.email,
-        region:   form.region,
-        comuna:   form.comuna,
-        password: form.password,
+      // Enviamos los datos a tu API
+      const data = await authService.register({
+        rut,
+        nombre,
+        correo,
+        contrasena,
+        region,
+        comuna
       });
-      setExito(true);
-      setTimeout(() => history.push('/login'), 2000);
+
+      if (data.success) {
+        // Si el registro es exitoso, redirigimos al login
+        alert('Cuenta creada con éxito. Ahora puedes iniciar sesión.');
+        history.push('/login');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Error al registrar. Intenta nuevamente.');
+      setErrorMsg(err.message || 'Error al conectar con el servidor.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -92,34 +87,53 @@ const Registro: React.FC = () => {
                 <div className="row">
                   <div className="col-6 mb-3">
                     <label className="form-label small font-weight-bold">Nombre Completo</label>
-                    <input type="text" name="nombre" className="form-control"
-                      placeholder="Ej: Ana López" required
-                      value={form.nombre} onChange={handleChange}
-                      style={{ borderRadius: '8px' }} />
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="Ej: Ana López" 
+                      value={nombre}
+                      onChange={(e) => setNombre(e.target.value)}
+                      required 
+                      style={{ borderRadius: '8px' }} 
+                    />
                   </div>
                   <div className="col-6 mb-3">
                     <label className="form-label small font-weight-bold">RUT</label>
-                    <input type="text" name="rut" className="form-control"
-                      placeholder="12.345.678-9" required
-                      value={form.rut} onChange={handleChange}
-                      style={{ borderRadius: '8px' }} />
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="12.345.678-9" 
+                      value={rut}
+                      onChange={(e) => setRut(e.target.value)}
+                      required 
+                      style={{ borderRadius: '8px' }} 
+                    />
                   </div>
                 </div>
 
                 <div className="mb-3">
                   <label className="form-label small font-weight-bold">Correo Electrónico</label>
-                  <input type="email" name="email" className="form-control"
-                    placeholder="correo@ejemplo.cl" required
-                    value={form.email} onChange={handleChange}
-                    style={{ borderRadius: '8px' }} />
+                  <input 
+                    type="email" 
+                    className="form-control" 
+                    placeholder="correo@ejemplo.cl" 
+                    value={correo}
+                    onChange={(e) => setCorreo(e.target.value)}
+                    required 
+                    style={{ borderRadius: '8px' }} 
+                  />
                 </div>
 
                 <div className="row">
                   <div className="col-6 mb-3">
                     <label className="form-label small font-weight-bold">Región</label>
-                    <select name="region" className="form-control" required
-                      value={form.region} onChange={handleChange}
-                      style={{ borderRadius: '8px' }}>
+                    <select 
+                      className="form-control" 
+                      value={region}
+                      onChange={(e) => setRegion(e.target.value)}
+                      required 
+                      style={{ borderRadius: '8px' }}
+                    >
                       <option value="" disabled>Seleccione...</option>
                       <option value="valparaiso">Región de Valparaíso</option>
                       <option value="metropolitana">Región Metropolitana</option>
@@ -127,9 +141,13 @@ const Registro: React.FC = () => {
                   </div>
                   <div className="col-6 mb-3">
                     <label className="form-label small font-weight-bold">Comuna</label>
-                    <select name="comuna" className="form-control" required
-                      value={form.comuna} onChange={handleChange}
-                      style={{ borderRadius: '8px' }}>
+                    <select 
+                      className="form-control" 
+                      value={comuna}
+                      onChange={(e) => setComuna(e.target.value)}
+                      required 
+                      style={{ borderRadius: '8px' }}
+                    >
                       <option value="" disabled>Seleccione...</option>
                       <option value="santo_domingo">Santo Domingo</option>
                       <option value="san_antonio">San Antonio</option>
@@ -140,20 +158,34 @@ const Registro: React.FC = () => {
                 <div className="row">
                   <div className="col-6 mb-3">
                     <label className="form-label small font-weight-bold">Contraseña</label>
-                    <input type="password" name="password" className="form-control"
-                      placeholder="••••••••" required
-                      value={form.password} onChange={handleChange}
-                      style={{ borderRadius: '8px' }} />
+                    <input 
+                      type="password" 
+                      className="form-control" 
+                      placeholder="••••••••" 
+                      value={contrasena}
+                      onChange={(e) => setContrasena(e.target.value)}
+                      required 
+                      style={{ borderRadius: '8px' }} 
+                    />
                   </div>
                   <div className="col-6 mb-3">
                     <label className="form-label small font-weight-bold">Confirmar Contraseña</label>
-                    <input type="password" name="confirmar" className="form-control"
-                      placeholder="••••••••" required
-                      value={form.confirmar} onChange={handleChange}
-                      style={{ borderRadius: '8px' }} />
+                    <input 
+                      type="password" 
+                      className="form-control" 
+                      placeholder="••••••••" 
+                      value={confirmarContrasena}
+                      onChange={(e) => setConfirmarContrasena(e.target.value)}
+                      required 
+                      style={{ borderRadius: '8px' }} 
+                    />
                   </div>
                 </div>
 
+                {/* Mensaje de error visual */}
+                {errorMsg && <div className="alert alert-danger p-2 small mb-3">{errorMsg}</div>}
+
+                {/* Términos */}
                 <div className="form-check mb-4 p-3 bg-light rounded" style={{ paddingLeft: '2.5rem' }}>
                   <input className="form-check-input" type="checkbox" id="terminos" required
                     onChange={e => setTerminosAceptados(e.target.checked)} />
@@ -162,13 +194,19 @@ const Registro: React.FC = () => {
                   </label>
                 </div>
 
-                <button type="submit" className="btn btn-primary w-100"
-                  disabled={!terminosAceptados || loading}
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100"
+                  disabled={!terminosAceptados || isLoading}
                   style={{
                     backgroundColor: terminosAceptados ? '#006FB3' : '#aab4be',
-                    border: 'none', borderRadius: '8px', padding: '10px', fontWeight: '600',
-                  }}>
-                  {loading ? 'Registrando...' : 'Registrar Cuenta'}
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontWeight: '600',
+                  }}
+                >
+                  {isLoading ? 'Registrando...' : 'Registrar Cuenta'}
                 </button>
 
                 <div className="text-center mt-3">
