@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
 from app import models, schemas
-from app.auth import get_current_admin
+from middleware.auth import get_current_admin
 from fastapi.responses import StreamingResponse
 import csv, io, re
+from fastapi import status
 
 router = APIRouter(prefix="/documentos", tags=["Documentos"])
 
@@ -121,4 +122,37 @@ def _generar_csv(documentos, filename: str):
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+# UPDATE (PUT)
+@router.put("/{doc_id}", response_model=schemas.DocumentoResponse)
+def actualizar_documento(
+    doc_id: int, 
+    doc_update: schemas.DocumentoUpdate, 
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_admin)
+):
+    db_doc = db.query(models.Documento).filter(models.Documento.id == doc_id).first()
+    if not db_doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    
+    update_data = doc_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_doc, key, value)
+        
+    db.commit()
+    db.refresh(db_doc)
+    return db_doc
 
+# DELETE
+@router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_documento(
+    doc_id: int, 
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_admin)
+):
+    db_doc = db.query(models.Documento).filter(models.Documento.id == doc_id).first()
+    if not db_doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    
+    db.delete(db_doc)
+    db.commit()
+    return {"mensaje": "Documento eliminado exitosamente"}

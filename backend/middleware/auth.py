@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from app.database import get_db
 from app import models
 import os
+from datetime import datetime, timedelta, timezone
 
 load_dotenv()
 
@@ -45,6 +46,7 @@ def create_access_token(data: dict) -> str:
     payload = data.copy()
     expire  = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload.update({"exp": expire})
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 def decode_token(token: str) -> dict:

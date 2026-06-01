@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { IonPage, IonContent, IonButton, IonIcon } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import { authService } from '../service/api'; // Importamos tu servicio de API
+import { authService } from '../services/api'; // Importamos tu servicio de API
 
 const Registro: React.FC = () => {
   const history = useHistory();
@@ -20,6 +20,8 @@ const Registro: React.FC = () => {
   // Estados de control de la petición
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [exito, setExito] = useState<string>('');
 
   // 2. Función asíncrona para enviar los datos
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,8 +41,8 @@ const Registro: React.FC = () => {
       const data = await authService.register({
         rut,
         nombre,
-        correo,
-        contrasena,
+        email: correo,
+        password: contrasena,
         region,
         comuna
       });

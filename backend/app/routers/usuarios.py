@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
 from app import models, schemas
-from app.auth import get_current_admin
+from middleware.auth import get_current_admin
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 

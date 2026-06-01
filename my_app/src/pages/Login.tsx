@@ -7,7 +7,7 @@ import {
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import { closeOutline } from 'ionicons/icons';
-import { authService } from '../service/api'; // 1. Importamos el servicio que creaste
+import { authService } from '../services/api'; // 1. Importamos el servicio que creaste
 
 interface LoginProps {
   onLogin?: (role: 'ciudadano' | 'admin') => void;
@@ -15,7 +15,7 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const history = useHistory();
-  const [rut, setRut]           = useState('');
+  const [rutUsuario, setRutUsuario]           = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);

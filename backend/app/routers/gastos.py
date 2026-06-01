@@ -7,7 +7,7 @@ from app import models, schemas
 import csv, io, re
 from fastapi import UploadFile, File
 
-from app.auth import get_current_user, get_current_admin
+from middleware.auth import get_current_user, get_current_admin
 
 router = APIRouter(prefix="/gastos", tags=["Gastos"])
 
@@ -64,3 +64,54 @@ def _mes_a_numero(mes_str: str) -> int:
         'septiembre':9,'octubre':10,'noviembre':11,'diciembre':12
     }
     return meses.get(mes_str.lower().strip(), 1)
+
+from fastapi import HTTPException, status
+
+# POST Individual
+@router.post("/", response_model=schemas.GastoResponse, status_code=status.HTTP_201_CREATED)
+def crear_gasto(
+    gasto: schemas.GastoCreate, 
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_admin) # Protegido, solo admin
+):
+    nuevo_gasto = models.Gasto(**gasto.dict())
+    db.add(nuevo_gasto)
+    db.commit()
+    db.refresh(nuevo_gasto)
+    return nuevo_gasto
+
+# PUT (Actualizar)
+@router.put("/{id}", response_model=schemas.GastoResponse)
+def actualizar_gasto(
+    id: int, 
+    gasto_update: schemas.GastoUpdate, 
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_admin) # Protegido
+):
+    db_gasto = db.query(models.Gasto).filter(models.Gasto.id == id).first()
+    if not db_gasto:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
+    
+    # Actualizar solo los campos que se enviaron
+    update_data = gasto_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_gasto, key, value)
+        
+    db.commit()
+    db.refresh(db_gasto)
+    return db_gasto
+
+# DELETE (Eliminar)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_gasto(
+    id: int, 
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_admin) # Protegido
+):
+    db_gasto = db.query(models.Gasto).filter(models.Gasto.id == id).first()
+    if not db_gasto:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
+    
+    db.delete(db_gasto)
+    db.commit()
+    return {"mensaje": "Gasto eliminado exitosamente"}

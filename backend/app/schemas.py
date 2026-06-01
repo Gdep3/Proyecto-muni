@@ -95,6 +95,17 @@ class GastoResponse(BaseModel):
 
     class Config:
         from_attributes = True
+class GastoCreate(BaseModel):
+    año: int
+    mes: int
+    area: str
+    monto: int
+
+class GastoUpdate(BaseModel):
+    año: Optional[int] = None
+    mes: Optional[int] = None
+    area: Optional[str] = None
+    monto: Optional[int] = None
 
 # Documentos
 
@@ -112,3 +123,25 @@ class DocumentoResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class DocumentoCreate(BaseModel):
+    codigo: str
+    tipo: str
+    categoria: str
+    area: str
+    fecha_pub: str
+    descripcion: str
+    enlace: str
+    año: int
+    mes: int
+
+class DocumentoUpdate(BaseModel):
+    codigo: Optional[str] = None
+    tipo: Optional[str] = None
+    categoria: Optional[str] = None
+    area: Optional[str] = None
+    fecha_pub: Optional[str] = None
+    descripcion: Optional[str] = None
+    enlace: Optional[str] = None
+    año: Optional[int] = None
+    mes: Optional[int] = None
