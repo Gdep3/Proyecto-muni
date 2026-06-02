@@ -17,13 +17,13 @@ class EstadoSolicitudEnum(str, enum.Enum):
 class Usuario(Base):
     __tablename__ = "usuarios"
 
-    id         = Column(Integer, primary_key=True, index=True)
+    #id         = Column(Integer, primary_key=True, index=True)
     nombre     = Column(String(100), nullable=False)
-    rut        = Column(String(12), unique=True, nullable=False, index=True)
-    email      = Column(String(150), unique=True, nullable=False, index=True)
+    rut        = Column(String(12), unique=True, nullable=False, index=True, primary_key=True)
+    email      = Column("correo", String(150), unique=True, nullable=False, index=True)
     region     = Column(String(100), nullable=True)
     comuna     = Column(String(100), nullable=True)
-    password   = Column(String(255), nullable=False)  # bcrypt hash
+    password   = Column("contrasena",String(255), nullable=False)  # bcrypt hash
     rol        = Column(Enum(RolEnum), default=RolEnum.ciudadano, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -42,7 +42,7 @@ class Solicitud(Base):
     descripcion = Column(Text, nullable=False)
     estado      = Column(Enum(EstadoSolicitudEnum), default=EstadoSolicitudEnum.pendiente)
     respuesta   = Column(Text, nullable=True)
-    usuario_id  = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    usuario_id  = Column(String(12), ForeignKey("usuarios.rut"), nullable=False)
     created_at  = Column(DateTime(timezone=True), server_default=func.now())
     updated_at  = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -53,7 +53,7 @@ class Solicitud(Base):
 class Gasto(Base):
     __tablename__ = "gastos"
 
-    id         = Column(Integer, primary_key=True, index=True)
+    id  = Column(Integer, primary_key=True, index=True)
     año        = Column(Integer, nullable=False)
     mes        = Column(Integer, nullable=False)  # 1-12
     area       = Column(String(100), nullable=False)  # Salud, Educacion, etc
@@ -65,6 +65,7 @@ class Documento(Base):
     __tablename__ = "documentos"
 
     id          = Column(Integer, primary_key=True, index=True)
+    usuario_id  = Column(String(12), ForeignKey("usuarios.rut"), nullable=False)
     codigo      = Column(String(20))
     tipo        = Column(String(100))
     categoria   = Column(String(100))

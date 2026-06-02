@@ -3,10 +3,11 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
+#from .env import DATABASE_URL
 
 load_dotenv()
 
-DATABASE_URL = "mysql+pymysql://root:ProyectoMuni1%IBJ@127.0.0.1:3306/santo_domingo_db"
+DATABASE_URL = "mysql+pymysql://ua60odoilfci2cag:MdPHTMmaMMxrKx3xkPAs@b9jd9bdq4cuuekljrvxe-mysql.services.clever-cloud.com:3306/b9jd9bdq4cuuekljrvxe"
 
 engine = create_engine(DATABASE_URL)
 

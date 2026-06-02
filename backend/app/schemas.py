@@ -29,7 +29,6 @@ class UsuarioCreate(BaseModel):
 
 
 class UsuarioResponse(BaseModel):
-    id: int
     nombre: str
     rut: str
     email: str
@@ -77,7 +76,7 @@ class SolicitudResponse(BaseModel):
     descripcion: str
     estado: EstadoSolicitudEnum
     respuesta: Optional[str]
-    usuario_id: int
+    usuario_id: str
     created_at: datetime
     updated_at: Optional[datetime]
 
