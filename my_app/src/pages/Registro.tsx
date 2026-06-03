@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { IonPage, IonContent, IonButton, IonIcon } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import { authService } from '../services/api'; // Importamos tu servicio de API
+import { authService } from '../services/api';
 
 const Registro: React.FC = () => {
   const history = useHistory();
   
-  // 1. Estados para capturar todos los campos del formulario
   const [nombre, setNombre] = useState('');
   const [rut, setRut] = useState('');
   const [correo, setCorreo] = useState('');
@@ -17,18 +16,15 @@ const Registro: React.FC = () => {
   const [confirmarContrasena, setConfirmarContrasena] = useState('');
   const [terminosAceptados, setTerminosAceptados] = useState(false);
 
-  // Estados de control de la petición
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [exito, setExito] = useState<string>('');
 
-  // 2. Función asíncrona para enviar los datos
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
-    // Validación básica: las contraseñas deben ser iguales
     if (contrasena !== confirmarContrasena) {
       setErrorMsg('Las contraseñas no coinciden.');
       return;
@@ -37,7 +33,6 @@ const Registro: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Enviamos los datos a tu API
       const data = await authService.register({
         rut,
         nombre,
@@ -48,7 +43,6 @@ const Registro: React.FC = () => {
       });
 
       if (data.success) {
-        // Si el registro es exitoso, redirigimos al login
         alert('Cuenta creada con éxito. Ahora puedes iniciar sesión.');
         history.push('/login');
       }

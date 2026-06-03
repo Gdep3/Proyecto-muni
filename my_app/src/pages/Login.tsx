@@ -1,13 +1,8 @@
 import React, { useState } from 'react';
-import { 
-  IonPage, 
-  IonContent,
-  IonIcon,
-  IonButton
-} from '@ionic/react';
+import { IonPage, IonContent, IonIcon, IonButton } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import { closeOutline } from 'ionicons/icons';
-import { authService } from '../services/api'; // 1. Importamos el servicio que creaste
+import { authService } from '../services/api'; 
 
 interface LoginProps {
   onLogin?: (role: 'ciudadano' | 'admin') => void;
@@ -15,18 +10,13 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const history = useHistory();
-  const [rutUsuario, setRutUsuario]           = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
-
-  // 2. Creamos los estados para manejar los datos del formulario
+  
+  // Estados limpios y sin duplicados
   const [rut, setRut] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // 3. Modificamos la función para que sea asíncrona y consulte a la API
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -36,9 +26,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const data = await authService.login(rut, contrasena);
 
       if (data.success) {
-        onLogin?.(data.role); // 'admin' o 'ciudadano' validado por la BD
+        onLogin?.(data.role as 'ciudadano' | 'admin');
         
-        // Redirigimos según el rol real
         if (data.role === 'admin') {
           history.push('/admin/dashboard');
         } else {
@@ -46,7 +35,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }
       }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Error al iniciar sesión');
+      setErrorMsg(err.message || 'RUT o contraseña incorrectos');
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +60,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       placeholder="12221457-8" 
                       style={{ borderRadius: '8px' }} 
                       value={rut}
-                      onChange={(e) => setRut(e.target.value)} // Captura el RUT
+                      onChange={(e) => setRut(e.target.value)} 
                       required
                     />
                   </div>
@@ -83,19 +72,18 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       placeholder="Tu contraseña" 
                       style={{ borderRadius: '8px' }} 
                       value={contrasena}
-                      onChange={(e) => setContrasena(e.target.value)} // Captura la contraseña
+                      onChange={(e) => setContrasena(e.target.value)} 
                       required
                     />
                   </div>
 
-                  {/* Mostramos el error si el backend rechaza las credenciales */}
                   {errorMsg && <p className="text-danger small text-center mb-2">{errorMsg}</p>}
 
                   <button 
                     type="submit" 
                     className="btn btn-primary w-100" 
                     style={{ backgroundColor: '#006FB3', border: 'none', borderRadius: '8px', padding: '10px' }}
-                    disabled={isLoading} // Deshabilita el botón mientras carga
+                    disabled={isLoading}
                   >
                     {isLoading ? 'Conectando...' : 'Iniciar Sesión'}
                   </button>
@@ -105,7 +93,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   </div>
                 </form>
                 
-                {/* Nota: Mantuve los botones de prueba temporalmente para que tu equipo siga probando vistas sin depender de la BD */}
                 <div className="mt-3">
                   <p className="text-muted small text-center mb-2">— Acceso rápido (solo pruebas) —</p>
                   <div style={{ display: 'flex', gap: '8px' }}>
