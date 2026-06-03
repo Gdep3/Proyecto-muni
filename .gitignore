@@ -12,6 +12,10 @@ coverage/
 .env.*
 !.env.example
 
+.venv
+backend/app/__pycache__
+backend/app/middleware/__pycahce__
+
 # ─── LOGS Y CACHÉ ───
 npm-debug.log*
 yarn-debug.log*

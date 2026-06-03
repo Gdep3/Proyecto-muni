@@ -44,7 +44,7 @@ const Registro: React.FC = () => {
 
       if (data.success) {
         alert('Cuenta creada con éxito. Ahora puedes iniciar sesión.');
-        history.push('/login');
+        history.push('/inicio');
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Error al conectar con el servidor.');
@@ -60,7 +60,7 @@ const Registro: React.FC = () => {
           <div className="card shadow-lg border-0" style={{ borderRadius: '15px', maxWidth: '500px', width: '100%', position: 'relative' }}>
             <div className="card-body p-4">
 
-              <IonButton onClick={() => history.push('/login')} shape="round" fill="clear"
+              <IonButton onClick={() => history.push('/inicio')} shape="round" fill="clear"
                 style={{ position: 'absolute', top: '5px', right: '5px', width: '30px', height: '30px' }}>
                 <IonIcon slot="icon-only" icon={closeOutline} color="dark" />
               </IonButton>
