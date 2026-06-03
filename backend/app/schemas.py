@@ -39,6 +39,7 @@ class UsuarioResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        orm_mode = True
 
 
 # Auth
@@ -82,6 +83,7 @@ class SolicitudResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        orm_mode = True
 
 # Gastos
 
@@ -94,6 +96,7 @@ class GastoResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        orm_mode = True
 class GastoCreate(BaseModel):
     año: int
     mes: int
@@ -122,7 +125,7 @@ class DocumentoResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
+        orm_mode = True
 class DocumentoCreate(BaseModel):
     codigo: str
     tipo: str
