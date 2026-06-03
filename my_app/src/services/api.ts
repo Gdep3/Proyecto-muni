@@ -89,6 +89,21 @@ export const authService = {
        throw new Error(error.detail || 'Error al registrar');
     }
     return { success: true };
+  },
+
+  isAuth: () => {
+    return !!localStorage.getItem('token');
+  },
+  
+  getRol: () => {
+    return localStorage.getItem('userRole');
+  },
+
+  logout: () => {
+    // Limpia la memoria al cerrar sesión
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('nombre');
   }
 };
 
