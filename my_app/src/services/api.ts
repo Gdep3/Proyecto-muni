@@ -1,6 +1,5 @@
 const BASE_URL = 'http://localhost:8000';
 
-
 //Helper: fetch con JWT automático
 const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('token');
@@ -16,12 +15,14 @@ const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
 
   const res = await fetch(`${BASE_URL}${endpoint}`, { ...options, headers });
 
-  // Token expirado o inválido
   if (res.status === 401) {
     localStorage.removeItem('token');
-    localStorage.removeItem('rol');
+    localStorage.removeItem('userRole'); // Ajustado para que coincida
     localStorage.removeItem('nombre');
-    window.location.href = '/login';
+    
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
     return;
   }
 
@@ -39,63 +40,82 @@ const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
 
 //Auth 
 export const authService = {
-  login: async (rut: string, password: string) => {
-    const data = await apiFetch('/auth/login', {
+  // Función para obtener el Token y el Rol
+  login: async (rut: string, contrasena: string) => {
+    const formData = new URLSearchParams();
+    formData.append('username', rut); 
+    formData.append('password', contrasena);
+
+    const loginResponse = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
-      body: JSON.stringify({ rut, password }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData,
     });
-    localStorage.setItem('token',  data.access_token);
-    localStorage.setItem('rol',    data.rol);
-    localStorage.setItem('nombre', data.nombre);
-    return data;
+
+    if (!loginResponse.ok) {
+      throw new Error('Credenciales incorrectas');
+    }
+
+    const tokenData = await loginResponse.json();
+    localStorage.setItem('token', tokenData.access_token);
+
+    // Segunda petición para traer el perfil y el rol
+    const userResponse = await fetch(`${BASE_URL}/auth/me`, { 
+      headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+    });
+
+    if (!userResponse.ok) {
+      throw new Error('No se pudo obtener el perfil del usuario');
+    }
+
+    const userData = await userResponse.json();
+    localStorage.setItem('userRole', userData.rol);
+
+    return {
+      success: true,
+      role: userData.rol 
+    };
   },
 
-  register: async (datos: {
-    nombre: string;
-    rut: string;
-    email: string;
-    region?: string;
-    comuna?: string;
-    password: string;
-  }) => {
-    return apiFetch('/auth/register', {
+  register: async (datos: any) => {
+    const res = await fetch(`${BASE_URL}/auth/register`, {
       method: 'POST',
-      body: JSON.stringify(datos),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datos)
     });
+
+    if (!res.ok) {
+       const error = await res.json();
+       throw new Error(error.detail || 'Error al registrar');
+    }
+    return { success: true };
+  },
+
+  isAuth: () => {
+    return !!localStorage.getItem('token');
+  },
+  
+  getRol: () => {
+    return localStorage.getItem('userRole');
   },
 
   logout: () => {
+    // Limpia la memoria al cerrar sesión
     localStorage.removeItem('token');
-    localStorage.removeItem('rol');
+    localStorage.removeItem('userRole');
     localStorage.removeItem('nombre');
-  },
-
-  getToken:  () => localStorage.getItem('token'),
-  getRol:    () => localStorage.getItem('rol') as 'ciudadano' | 'admin' | null,
-  getNombre: () => localStorage.getItem('nombre'),
-  isAuth:    () => !!localStorage.getItem('token'),
+  }
 };
 
 // Solicitudes
 export const solicitudesService = {
   listar: () => apiFetch('/solicitudes'),
-
   obtener: (id: number) => apiFetch(`/solicitudes/${id}`),
-
   crear: (datos: { categoria: string; asunto: string; descripcion: string }) =>
-    apiFetch('/solicitudes', {
-      method: 'POST',
-      body: JSON.stringify(datos),
-    }),
-
+    apiFetch('/solicitudes', { method: 'POST', body: JSON.stringify(datos) }),
   actualizar: (id: number, datos: { estado?: string; respuesta?: string }) =>
-    apiFetch(`/solicitudes/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(datos),
-    }),
-
-  eliminar: (id: number) =>
-    apiFetch(`/solicitudes/${id}`, { method: 'DELETE' }),
+    apiFetch(`/solicitudes/${id}`, { method: 'PUT', body: JSON.stringify(datos) }),
+  eliminar: (id: number) => apiFetch(`/solicitudes/${id}`, { method: 'DELETE' }),
 };
 
 // Usuarios (solo admin)
@@ -115,27 +135,21 @@ export const gastosService = {
 };
 
 // Documentos 
-
 export const documentosService = {
   listar:  () => apiFetch('/documentos'),
   obtener: (id: number) => apiFetch(`/documentos/${id}`),
-
   descargarTodos: () => {
-    const token = localStorage.getItem('token');
-    window.open(`http://localhost:8000/documentos/descargar/todos`, '_blank');
+    window.open(`${BASE_URL}/documentos/descargar/todos`, '_blank');
   },
-
   descargarUno: (id: number) => {
-    window.open(`http://localhost:8000/documentos/descargar/${id}`, '_blank');
+    window.open(`${BASE_URL}/documentos/descargar/${id}`, '_blank');
   },
-   filtros: () => apiFetch('/documentos/filtros'),
+  filtros: () => apiFetch('/documentos/filtros'),
 };
 
 export const perfilService = {
   obtener: () => apiFetch('/auth/me'),
   actualizar: (datos: { email?: string; comuna?: string }) =>
-    apiFetch('/auth/me', {
-      method: 'PUT',
-      body: JSON.stringify(datos),
-    }),
+    apiFetch('/auth/me', { method: 'PUT', body: JSON.stringify(datos) }),
 };
+

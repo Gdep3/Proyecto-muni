@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
 from app import models, schemas
-from app.auth import get_current_user, get_current_admin
+from middleware.auth import get_current_user, get_current_admin
 import random
 import string
 
@@ -23,7 +23,7 @@ def listar_solicitudes(
     if current_user.rol == models.RolEnum.admin:
         return db.query(models.Solicitud).all()
     return db.query(models.Solicitud).filter(
-        models.Solicitud.usuario_id == current_user.id
+        models.Solicitud.usuario_id == current_user.rut
     ).all()
 
 
@@ -60,7 +60,7 @@ def crear_solicitud(
         categoria   = datos.categoria,
         asunto      = datos.asunto,
         descripcion = datos.descripcion,
-        usuario_id  = current_user.id,
+        usuario_id  = current_user.rut,
     )
     db.add(nueva)
     db.commit()

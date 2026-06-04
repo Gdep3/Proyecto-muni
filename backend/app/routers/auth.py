@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models, schemas
-from app.auth import hash_password, verify_password, create_access_token, get_current_user
 import random
-
+from middleware.auth import hash_password, verify_password, create_access_token, get_current_user
 from typing import Optional
 from pydantic import BaseModel
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
@@ -39,8 +40,9 @@ def register(datos: schemas.UsuarioCreate, db: Session = Depends(get_db)):
 
 # ─── POST /auth/login ────────────────────────────────────────────
 @router.post("/login", response_model=schemas.TokenResponse)
-def login(datos: schemas.LoginRequest, db: Session = Depends(get_db)):
-    usuario = db.query(models.Usuario).filter(models.Usuario.rut == datos.rut).first()
+def login(datos: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    
+    usuario = db.query(models.Usuario).filter(models.Usuario.rut == datos.username).first()
 
     if not usuario or not verify_password(datos.password, usuario.password):
         raise HTTPException(
@@ -76,7 +78,7 @@ def update_me(
         # Verificar que el email no esté en uso por otro usuario
         existe = db.query(models.Usuario).filter(
             models.Usuario.email == datos.email,
-            models.Usuario.id != current_user.id
+            models.Usuario.rut != current_user.rut
         ).first()
         if existe:
             raise HTTPException(status_code=400, detail="El email ya está en uso")
