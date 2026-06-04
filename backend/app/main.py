@@ -2,10 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.routers import auth, solicitudes, usuarios, gastos, documentos
-
-
-# Crea todas las tablas en la BD si no existen
-Base.metadata.create_all(bind=engine)
+from app.database import SessionLocal
+from app.models import Usuario, RolEnum
+from middleware.auth import hash_password
 
 app = FastAPI(
     title="API Municipalidad Santo Domingo",

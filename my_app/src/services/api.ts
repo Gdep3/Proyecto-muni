@@ -122,6 +122,8 @@ export const solicitudesService = {
 export const usuariosService = {
   listar:  () => apiFetch('/usuarios'),
   obtener: (id: number) => apiFetch(`/usuarios/${id}`),
+  cambiarRol: (rut: string, rol: 'admin' | 'ciudadano') => 
+    apiFetch(`/usuarios/${rut}/rol?nuevo_rol=${rol}`, { method: 'PUT' }),
 };
 
 // Gastos
