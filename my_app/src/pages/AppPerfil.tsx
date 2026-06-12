@@ -220,6 +220,29 @@ const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout, backRoute = '/app/inici
                 <IonIcon icon={logOutOutline} style={{ fontSize: '18px' }} />
                 Cerrar Sesión
               </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const confirmar = confirm('¿Estás seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer.');
+                  if (!confirmar) return;
+                  const confirmar2 = confirm('¿Confirmas que quieres eliminar permanentemente tu cuenta y todos tus datos?');
+                  if (!confirmar2) return;
+                  try {
+                    await perfilService.eliminarCuenta();
+                    onLogout?.();
+                    setTimeout(() => history.replace('/inicio'), 50);
+                  } catch {
+                    alert('Error al eliminar la cuenta');
+                  }
+                }}
+                style={{
+                  width: '100%', padding: '13px', backgroundColor: 'transparent',
+                  color: '#aaa', border: '1px solid #eee', borderRadius: '12px',
+                  fontSize: '13px', fontWeight: '600', cursor: 'pointer', marginTop: '8px',
+                }}
+              >
+                Eliminar mi cuenta
+              </button>
             </div>
 
           </div>

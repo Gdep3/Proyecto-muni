@@ -1,47 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import {
-  IonPage, IonHeader, IonToolbar, IonContent, IonButton, IonIcon, IonSpinner,
+  IonPage, IonContent, IonButton, IonIcon, IonSpinner,
 } from '@ionic/react';
-import { personOutline, arrowBackOutline, personCircleOutline } from 'ionicons/icons';
+import { personOutline, arrowBackOutline, personCircleOutline, trashOutline, shieldOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
+import HeaderLinks from '../components/HeaderLink';
 import { usuariosService } from '../services/api';
 
 const rolColor: Record<string, { bg: string; color: string }> = {
-  ciudadano:     { bg: '#e8f4fd', color: '#1a9cd8' },
-  admin:         { bg: '#e8f0fe', color: '#15305b' },
+  ciudadano: { bg: '#e8f4fd', color: '#1a9cd8' },
+  admin:     { bg: '#e8f0fe', color: '#15305b' },
 };
 
 const AdminUsuario: React.FC = () => {
   const history = useHistory();
-  const [usuarios, setUsuarios] = useState<any[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState('');
+  const [usuarios, setUsuarios]   = useState<any[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState('');
 
-  useEffect(() => {
+  const cargar = () => {
+    setLoading(true);
     usuariosService.listar()
       .then(data => setUsuarios(data))
       .catch(() => setError('Error al cargar los usuarios'))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { cargar(); }, []);
+
+  const cambiarRol = async (id: number, rolActual: string) => {
+    const nuevoRol = rolActual === 'admin' ? 'ciudadano' : 'admin';
+    if (!confirm(`¿Cambiar rol a ${nuevoRol}?`)) return;
+    try {
+      await usuariosService.cambiarRol(id, nuevoRol);
+      cargar();
+    } catch {
+      alert('Error al cambiar el rol');
+    }
+  };
+
+  const eliminar = async (id: number, nombre: string) => {
+    if (!confirm(`¿Eliminar al usuario ${nombre}? Esta acción no se puede deshacer.`)) return;
+    try {
+      await usuariosService.eliminar(id);
+      cargar();
+    } catch {
+      alert('Error al eliminar el usuario');
+    }
+  };
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar style={{ '--background': '#15305b' }}>
-          <div style={{
-            display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
-            gap: '28px', padding: '10px 30px', fontSize: '13px', color: '#ffffff',
-            borderBottom: '1px solid rgba(255,255,255,0.15)',
-          }}>
-            <span style={{ cursor: 'pointer' }}>Plataforma Ley Lobby</span>
-            <span style={{ cursor: 'pointer' }}>Transparencia Activa</span>
-            <span style={{ cursor: 'pointer' }}>Solicitud Ley de Transparencia</span>
-            <span style={{ cursor: 'pointer' }}>Decretos</span>
-            <span style={{ color: '#f1c40f', fontWeight: 'bold', cursor: 'pointer' }}>Consejo Municipal en VIVO</span>
-          </div>
-        </IonToolbar>
-      </IonHeader>
-
+      <HeaderLinks />
       <IonContent style={{ '--background': '#f0f2f5' }}>
         <div style={{
           backgroundColor: '#15305b', padding: '28px 30px 100px 30px', color: 'white',
@@ -60,7 +70,7 @@ const AdminUsuario: React.FC = () => {
               </p>
             </div>
           </div>
-          <IonButton color="light" style={{
+          <IonButton color="light" onClick={() => history.push('/admin/perfil')} style={{
             width: '48px', height: '48px', '--border-radius': '50%',
             '--padding-start': '0', '--padding-end': '0', marginTop: '6px',
           }}>
@@ -84,25 +94,18 @@ const AdminUsuario: React.FC = () => {
                 <IonSpinner name="crescent" style={{ color: '#15305b' }} />
               </div>
             )}
-
             {error && (
-              <div style={{ padding: '20px', color: '#842029', backgroundColor: '#f8d7da' }}>
-                {error}
-              </div>
+              <div style={{ padding: '20px', color: '#842029', backgroundColor: '#f8d7da' }}>{error}</div>
             )}
-
             {!loading && !error && usuarios.length === 0 && (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
-                No hay usuarios registrados.
-              </div>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>No hay usuarios.</div>
             )}
 
             {usuarios.map((u, i) => {
               const rc = rolColor[u.rol] ?? { bg: '#e9ecef', color: '#495057' };
               return (
                 <div key={u.id} style={{
-                  display: 'flex', alignItems: 'center', gap: '16px',
-                  padding: '16px 24px',
+                  display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 24px',
                   borderBottom: i < usuarios.length - 1 ? '1px solid #f5f5f5' : 'none',
                 }}>
                   <div style={{
@@ -121,6 +124,30 @@ const AdminUsuario: React.FC = () => {
                   }}>
                     {u.rol.charAt(0).toUpperCase() + u.rol.slice(1)}
                   </span>
+
+                  {/* Botón cambiar rol */}
+                  <button
+                    onClick={() => cambiarRol(u.id, u.rol)}
+                    title={u.rol === 'admin' ? 'Quitar admin' : 'Hacer admin'}
+                    style={{
+                      padding: '6px 10px', borderRadius: '8px', border: '1px solid #d5d5d5',
+                      backgroundColor: 'white', cursor: 'pointer', flexShrink: 0,
+                    }}
+                  >
+                    <IonIcon icon={shieldOutline} style={{ color: '#15305b', fontSize: '16px' }} />
+                  </button>
+
+                  {/* Botón eliminar */}
+                  <button
+                    onClick={() => eliminar(u.id, u.nombre)}
+                    title="Eliminar usuario"
+                    style={{
+                      padding: '6px 10px', borderRadius: '8px', border: '1px solid #f8d7da',
+                      backgroundColor: '#fff5f5', cursor: 'pointer', flexShrink: 0,
+                    }}
+                  >
+                    <IonIcon icon={trashOutline} style={{ color: '#e74c3c', fontSize: '16px' }} />
+                  </button>
                 </div>
               );
             })}

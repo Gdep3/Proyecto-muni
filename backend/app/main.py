@@ -17,7 +17,7 @@ app = FastAPI(
 # Permite que el frontend Ionic (localhost:5173) consuma la API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:8100"],
+    allow_origins=["http://localhost:5173", "http://localhost:8100", "http://localhost:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -9,7 +9,7 @@ load_dotenv()
 
 DATABASE_URL = "mysql+pymysql://ua60odoilfci2cag:MdPHTMmaMMxrKx3xkPAs@b9jd9bdq4cuuekljrvxe-mysql.services.clever-cloud.com:3306/b9jd9bdq4cuuekljrvxe"
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, pool_size=2, max_overflow=2, pool_recycle=3600)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
