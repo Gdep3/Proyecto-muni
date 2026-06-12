@@ -10,7 +10,6 @@ Antes de ejecutar el proyecto es necesario contar con:
 - Node.js
 - Ionic
 - Python 3.11
-- XAMPP (para MySQL)
 - opcionalmente git
 ### Paso 1 — Clonar el repositorio
 Primero se debe clonar, si es que se tiene git, o descargar el proyecto.
@@ -45,31 +44,7 @@ ionic serve
  
 ## Backend (FastAPI + MariaDB)
  
-### Paso 4 — Iniciar MySQL en XAMPP
-Abre XAMPP y presiona **Start** en MySQL.
- 
-### Paso 5 — Crear la base de datos
-Abre una terminal y ejecuta:
-```bash
-"C:\xampp\mysql\bin\mysql.exe" -u root
-```
-Dentro de MySQL:
-```sql
-CREATE DATABASE municipalidad_db;
-EXIT;
-```
- 
-### Paso 6 — Crear el archivo .env
-Dentro de la carpeta `backend/` crea un archivo llamado `.env`:
-```bash
-DATABASE_URL=mysql+pymysql://root:@localhost:3306/municipalidad_db
-SECRET_KEY=tu_clave_secreta_aqui
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-```
-Si tu MySQL tiene contraseña cambia `root:@` por `root:TuContraseña@`
- 
-### Paso 7 — Crear entorno virtual e instalar dependencias
+### Paso 4 — Crear entorno virtual e instalar dependencias
 ```bash
 cd backend
 python -m venv .venv
@@ -83,9 +58,9 @@ pip install -r requirements.txt
 ```
 Cada vez que abras una terminal nueva deberás activar el entorno virtual antes de ejecutar el servidor.
 
-### Paso 8 — Ejecutar el servidor
+### Paso 5 — Ejecutar el servidor
 ```bash
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 El servidor queda disponible en `http://localhost:8000`  
 La documentación interactiva en `http://localhost:8000/docs`

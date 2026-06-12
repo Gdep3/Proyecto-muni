@@ -120,10 +120,12 @@ export const solicitudesService = {
 
 // Usuarios (solo admin)
 export const usuariosService = {
-  listar:  () => apiFetch('/usuarios'),
-  obtener: (id: number) => apiFetch(`/usuarios/${id}`),
-  cambiarRol: (rut: string, rol: 'admin' | 'ciudadano') => 
-    apiFetch(`/usuarios/${rut}/rol?nuevo_rol=${rol}`, { method: 'PUT' }),
+  listar:     () => apiFetch('/usuarios'),
+  obtener:    (id: number) => apiFetch(`/usuarios/${id}`),
+  cambiarRol: (id: number, rol: string) => apiFetch(`/usuarios/${id}/rol`, {
+    method: 'PUT', body: JSON.stringify({ rol }),
+  }),
+  eliminar:   (id: number) => apiFetch(`/usuarios/${id}`, { method: 'DELETE' }),
 };
 
 // Gastos
@@ -150,8 +152,8 @@ export const documentosService = {
 };
 
 export const perfilService = {
-  obtener: () => apiFetch('/auth/me'),
-  actualizar: (datos: { email?: string; comuna?: string }) =>
-    apiFetch('/auth/me', { method: 'PUT', body: JSON.stringify(datos) }),
+  obtener:          () => apiFetch('/auth/me'),
+  actualizar:       (datos: any) => apiFetch('/auth/me', { method: 'PUT', body: JSON.stringify(datos) }),
+  eliminarCuenta:   () => apiFetch('/auth/me', { method: 'DELETE' }),
 };
 

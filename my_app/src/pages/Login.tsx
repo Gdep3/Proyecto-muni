@@ -92,28 +92,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     <a href="#" className="small text-muted" style={{ textDecoration: 'underline' }}>¿Olvidaste la contraseña?</a>
                   </div>
                 </form>
-                
-                <div className="mt-3">
-                  <p className="text-muted small text-center mb-2">— Acceso rápido (solo pruebas) —</p>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      type="button"
-                      className="btn btn-outline-primary w-100"
-                      style={{ borderRadius: '8px', fontSize: '13px' }}
-                      onClick={() => { onLogin?.('ciudadano'); history.push('/app/inicio'); }}
-                    >
-                      Entrar como Ciudadano
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline-danger w-100"
-                      style={{ borderRadius: '8px', fontSize: '13px' }}
-                      onClick={() => { onLogin?.('admin'); history.push('/admin/dashboard'); }}
-                    >
-                      Entrar como Admin
-                    </button>
-                  </div>
-                </div>
 
               </div>
             </div>

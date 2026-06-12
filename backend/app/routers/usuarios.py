@@ -4,35 +4,13 @@ from typing import List
 from app.database import get_db
 from app import models, schemas
 from middleware.auth import get_current_admin, get_current_user
-from sqlalchemy.orm import Session
-
-
+from pydantic import BaseModel
+from typing import Optional
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
-@router.put("/usuarios/{rut_usuario}/rol")
-def cambiar_rol(
-    rut_usuario: str, 
-    nuevo_rol: str, # Deberá ser 'admin' o 'ciudadano'
-    db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_user)
-):
-    if current_user.rol != models.RolEnum.admin:
-        raise HTTPException(status_code=403, detail="Acceso denegado: Solo los administradores pueden cambiar roles.")
-
-    usuario_destino = db.query(models.Usuario).filter(models.Usuario.rut == rut_usuario).first()
-    
-    if not usuario_destino:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
-
-    if nuevo_rol == 'admin':
-        usuario_destino.rol = models.RolEnum.admin
-    else:
-        usuario_destino.rol = models.RolEnum.ciudadano
-        
-    db.commit()
-    
-    return {"mensaje": f"El rol de {rut_usuario} ha sido actualizado exitosamente a {nuevo_rol}"}
+class UsuarioRolUpdate(BaseModel):
+    rol: str
 
 # ─── GET /usuarios — solo admin ──────────────────────────────────
 @router.get("/", response_model=List[schemas.UsuarioResponse])
@@ -42,29 +20,50 @@ def listar_usuarios(
 ):
     return db.query(models.Usuario).all()
 
-
-# ─── GET /usuarios/{id} — solo admin ────────────────────────────
+# ─── GET /usuarios/{id} ──────────────────────────────────────────
 @router.get("/{usuario_id}", response_model=schemas.UsuarioResponse)
 def obtener_usuario(
-    usuario_id: str,
+    usuario_id: int,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_admin),
 ):
-    usuario = db.query(models.Usuario).filter(models.Usuario.rut == usuario_id).first()
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return usuario
 
+# ─── PUT /usuarios/{id}/rol — cambiar rol (solo admin) ───────────
+@router.put("/{usuario_id}/rol", response_model=schemas.UsuarioResponse)
+def cambiar_rol(
+    usuario_id: int,
+    datos: UsuarioRolUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_admin),
+):
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if datos.rol not in ['ciudadano', 'admin']:
+        raise HTTPException(status_code=400, detail="Rol inválido")
+    # No permitir que el admin se cambie su propio rol
+    if usuario.id == current_user.id:
+        raise HTTPException(status_code=400, detail="No puedes cambiar tu propio rol")
+    usuario.rol = datos.rol
+    db.commit()
+    db.refresh(usuario)
+    return usuario
 
 # ─── DELETE /usuarios/{id} — solo admin ─────────────────────────
 @router.delete("/{usuario_id}", status_code=204)
 def eliminar_usuario(
-    usuario_id: str,
+    usuario_id: int,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_admin),
 ):
-    usuario = db.query(models.Usuario).filter(models.Usuario.rut == usuario_id).first()
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if usuario.id == current_user.id:
+        raise HTTPException(status_code=400, detail="No puedes eliminar tu propia cuenta")
     db.delete(usuario)
     db.commit()

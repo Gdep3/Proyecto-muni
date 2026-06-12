@@ -6,18 +6,9 @@ import os
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = "mysql+pymysql://ua60odoilfci2cag:MdPHTMmaMMxrKx3xkPAs@b9jd9bdq4cuuekljrvxe-mysql.services.clever-cloud.com:3306/b9jd9bdq4cuuekljrvxe"
 
-if not DATABASE_URL:
-    raise ValueError("¡Cuidado! No se encontró DATABASE_URL en el archivo .env")
-
-engine = engine = create_engine(
-    DATABASE_URL, 
-    pool_pre_ping=True, 
-    pool_recycle=3600, 
-    pool_size=5, 
-    max_overflow=10
-)
+engine = create_engine(DATABASE_URL, pool_size=2, max_overflow=2, pool_recycle=3600)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
