@@ -65,13 +65,14 @@ class Documento(Base):
     __tablename__ = "documentos"
 
     id          = Column(Integer, primary_key=True, index=True)
-    usuario_id  = Column(String(12), ForeignKey("usuarios.rut"), nullable=False)
+   # usuario_id  = Column(String(12), ForeignKey("usuarios.rut"), nullable=False)
     codigo      = Column(String(20))
     tipo        = Column(String(100))
     categoria   = Column(String(100))
     area        = Column(String(100))
     fecha_pub   = Column(String(20))
     descripcion = Column(Text)
-    enlace      = Column(Text)
+    enlace_contrato = Column(String(512), nullable=True)
+    enlace_acto = Column(String(512), nullable=True)
     año         = Column(Integer)
     mes         = Column(Integer)

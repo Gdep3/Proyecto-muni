@@ -36,7 +36,7 @@ import HeaderLinks from '../components/HeaderLink';
 import { gastosService } from '../services/api';
 import { documentosService } from '../services/api';
 
-/*  Constantes  */
+/* Constantes  */
 const MESES = [
   { label: 'Enero', num: 1 }, { label: 'Febrero', num: 2 }, { label: 'Marzo', num: 3 },
   { label: 'Abril', num: 4 }, { label: 'Junio', num: 6 }, { label: 'Julio', num: 7 },
@@ -46,7 +46,7 @@ const MESES = [
 
 const PIE_COLORS = ['#2a6095', '#1a9cd8', '#4ab8e8', '#3d7abf'];
 
-/*  Helpers  */
+/* Helpers  */
 const renderPieLegend = (pieData: any[]) => (
   <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '8px' }}>
     {pieData.map((entry, i) => (
@@ -71,19 +71,22 @@ const renderCustomLabel = ({ cx, cy, midAngle, outerRadius, name, value }: any) 
   );
 };
 
-/*  Props  */
+/* Props  */
 interface InicioPublicoProps {
   userRole?: 'ciudadano' | 'admin' | null;
   isAuth?: boolean;
 }
 
-/*  Componente  */
+/* Componente  */
 const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false }) => {
   const history = useHistory();
 
-  const [selectedYear, setSelectedYear] = useState('2026');
+  // Cambiamos los valores iniciales para que no rompan si la BD está en 2025 de forma predeterminada
+  const [selectedYear, setSelectedYear] = useState('2025');
   const [compareYear, setCompareYear]   = useState('Comparar');
-  const [selectedArea, setSelectedArea] = useState('Salud');
+  const [selectedArea, setSelectedArea] = useState('Total');
+  const [busqueda, setBusqueda]         = useState(''); // 🔍 Nuevo estado para la barra de búsqueda
+  
   const [popoverOpen, setPopoverOpen]   = useState(false);
   const [popoverEvent, setPopoverEvent] = useState<any>(null);
   const [barData, setBarData]           = useState<any[]>([]);
@@ -93,7 +96,7 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
   const [cargando, setCargando] = useState(true);
 
   const [años, setAños]   = useState<string[]>(['2025', '2026']);
-  const [areas, setAreas] = useState<string[]>(['Total', 'Salud', 'Compras']);
+  const [areas, setAreas] = useState<string[]>(['Total']);
 
   const [version, setVersion] = useState(0);
 
@@ -132,7 +135,7 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
     cargar();
   }, [selectedYear, compareYear, selectedArea, version]);
 
-  /*  Cargar pie  */
+  /* Cargar pie  */
   useEffect(() => {
     const cargar = async () => {
       try {
@@ -155,17 +158,26 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
     cargar();
   }, [selectedYear, version]);
 
-  /*  filtros  */
+  /* Cargar Filtros Dinámicos desde el Backend  */
   useEffect(() => {
     documentosService.filtros()
       .then(data => {
-        setAños(data.años.map(String));
-        setAreas(['Total', ...data.areas]);
+        if (data.años && data.años.length > 0) {
+          const listaAnios = data.años.map(String);
+          setAños(listaAnios);
+          // Si el año que tenemos seleccionado por defecto no existe en la BD, nos movemos al primero real
+          if (!listaAnios.includes(selectedYear)) {
+            setSelectedYear(listaAnios[0]);
+          }
+        }
+        if (data.areas && data.areas.length > 0) {
+          setAreas(['Total', ...data.areas]);
+        }
       })
       .catch(() => {});
   }, [version]);
 
-  /*  Documentos  */
+  /* Documentos  */
   useEffect(() => {
     const cargar = async () => {
       try {
@@ -180,7 +192,26 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
     cargar();
   }, [version]);
 
-  /*  Notificacion  */
+  /* ── FILTRADO EN TIEMPO REAL (Filtra la lista localmente con los Selectores + Barra de Búsqueda) ── */
+  const documentosFiltrados = documentos.filter((doc) => {
+    // 1. Validar Filtro de Año
+    const coincideAnio = !selectedYear || String(doc.año) === selectedYear;
+
+    // 2. Validar Filtro de Área o Categoría (Compara contra ambos campos por si acaso)
+    const coincideArea = selectedArea === 'Total' || 
+                         doc.area === selectedArea || 
+                         doc.categoria === selectedArea;
+
+    // 3. Validar Barra de Búsqueda por descripción o código
+    const texto = busqueda.toLowerCase().trim();
+    const coincideBusqueda = !texto || 
+      (doc.descripcion && doc.descripcion.toLowerCase().includes(texto)) ||
+      (doc.codigo && doc.codigo.toLowerCase().includes(texto));
+
+    return coincideAnio && coincideArea && coincideBusqueda;
+  });
+
+  /* Notificación  */
   useEffect(() => {
     const verificar = () => {
       const ultima = localStorage.getItem('ultima_importacion');
@@ -222,7 +253,7 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
             {[
                 { label: 'Año',          value: selectedYear, setter: setSelectedYear, options: años.map(a => [a, a]),                                    minWidth: '110px' },
                 { label: 'Comparar con', value: compareYear,  setter: setCompareYear,  options: [['Comparar','Comparar'], ...años.map(a => [a, a])],       minWidth: '150px' },
-                { label: 'Area',         value: selectedArea, setter: setSelectedArea, options: areas.map(a => [a, a]),                                   minWidth: '140px' },
+                { label: 'Categoría / Área', value: selectedArea, setter: setSelectedArea, options: areas.map(a => [a, a]),                               minWidth: '140px' },
             ].map(({ label, value, setter, options, minWidth }) => (
               <div key={label} style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '13px', marginBottom: '8px', fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}>{label}</span>
@@ -239,7 +270,7 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
                 if (isAuth && userRole === 'ciudadano') {
                   history.push('/app/perfil');
                 } else if (isAuth && userRole === 'admin') {
-                  history.push('/admin/perfil');  // ← faltaba este caso
+                  history.push('/admin/perfil');
                 } else {
                   history.push('/registro');
                 }
@@ -326,10 +357,15 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
           {/* ── BÚSQUEDA Y ACCIONES ── */}
           <IonRow className="ion-align-items-center" style={{ marginTop: '28px', marginBottom: '12px' }}>
             <IonCol size="12" sizeMd="5">
-              <IonSearchbar placeholder="Buscar Archivo" style={{
-                padding: 0, '--border-radius': '30px', '--box-shadow': 'none',
-                '--background': 'white', border: '1px solid #d5d5d5', borderRadius: '30px',
-              }} />
+              <IonSearchbar 
+                value={busqueda}
+                onIonInput={e => setBusqueda(e.detail.value!)}
+                placeholder="Buscar por descripción o código..." 
+                style={{
+                  padding: 0, '--border-radius': '30px', '--box-shadow': 'none',
+                  '--background': 'white', border: '1px solid #d5d5d5', borderRadius: '30px',
+                }} 
+              />
             </IonCol>
             <IonCol size="auto" style={{ display: 'flex', gap: '12px', marginLeft: 'auto', alignItems: 'center' }}>
               <IonButton fill="outline" shape="round" style={{
@@ -353,24 +389,29 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
             </IonCol>
           </IonRow>
 
-          {/* Lista */}
-
+          {/* Lista de Archivos */}
           <IonRow>
             <IonCol size="12">
               <IonCard style={{ borderRadius: '16px', margin: '0', border: '1px solid #e0e0e0', boxShadow: 'none', overflow: 'hidden' }}>
                 <IonList lines="full" style={{ padding: 0 }}>
-                  {documentos.length === 0 ? (
+                  {documentosFiltrados.length === 0 ? (
                     <IonItem>
-                      <IonLabel style={{ color: '#888', fontSize: '14px' }}>
-                        No hay documentos disponibles.
+                      <IonLabel style={{ color: '#888', fontSize: '14px', textAlign: 'center', padding: '10px 0' }}>
+                        No se encontraron documentos para los filtros seleccionados.
                       </IonLabel>
                     </IonItem>
                   ) : (
-                    documentos.map((doc) => (
-                      <IonItem key={doc.id} button detail={false} style={{
-                        '--padding-start': '24px', '--padding-end': '16px',
-                        '--min-height': '58px', '--border-color': '#ebebeb',
-                      }}>
+                    documentosFiltrados.map((doc) => (
+                      <IonItem 
+                        key={doc.id} 
+                        button 
+                        detail={false} 
+                        onClick={() => history.push(`/detalle-archivo/${doc.id}`)}
+                        style={{
+                          '--padding-start': '24px', '--padding-end': '16px',
+                          '--min-height': '58px', '--border-color': '#ebebeb',
+                        }}
+                      >
                         <IonLabel style={{ fontWeight: '500', color: '#2a2a2a', fontSize: '15px' }}>
                           {doc.descripcion ?? doc.codigo ?? `Documento ${doc.id}`}
                         </IonLabel>
@@ -378,7 +419,10 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
                           slot="end"
                           icon={reorderThreeOutline}
                           style={{ color: '#aaa', fontSize: '22px', cursor: 'pointer' }}
-                          onClick={(e) => { e.stopPropagation(); abrirMenu(e as any, doc.id); }}
+                          onClick={(e) => { 
+                            e.stopPropagation();
+                            abrirMenu(e as any, doc.id); 
+                          }}
                         />
                       </IonItem>
                     ))
@@ -390,7 +434,7 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
 
         </IonGrid>)}
 
-        {/* ── MENÚ CONTEXTUAL ── */}
+        {/* ── MENÚ CONTEXTUAL (POPOVER) ── */}
         <IonPopover
           isOpen={popoverOpen}
           event={popoverEvent}

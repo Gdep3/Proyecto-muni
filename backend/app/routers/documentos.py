@@ -1,14 +1,62 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form 
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
 from app import models, schemas
 from middleware.auth import get_current_admin
+from middleware.supabase_storage import subir_archivo_a_supabase 
 from fastapi.responses import StreamingResponse
-import csv, io, re
-from fastapi import status
+import csv, io, re, httpx, time
 
 router = APIRouter(prefix="/documentos", tags=["Documentos"])
+
+@router.post("/subir", response_model=schemas.DocumentoResponse, status_code=status.HTTP_201_CREATED)
+async def crear_documento(
+    codigo: str = Form(...),
+    tipo: str = Form(...),
+    categoria: str = Form(""),
+    area: str = Form(""),
+    descripcion: str = Form(""),
+    año: int = Form(None),
+    mes: int = Form(None),
+    fecha_pub: str = Form(""),
+    archivo: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_admin)  # Solo administradores
+):
+    if archivo.content_type != "application/pdf":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Solo se permiten archivos PDF"
+        )
+
+    try:
+        enlace_supabase = await subir_archivo_a_supabase(archivo)
+        
+        nuevo_doc = models.Documento(
+            codigo=codigo,
+            tipo=tipo,
+            categoria=categoria,
+            area=area,
+            descripcion=descripcion,
+            enlace=enlace_supabase, 
+            año=año,
+            mes=mes,
+            fecha_pub=fecha_pub
+        )
+        
+        db.add(nuevo_doc)
+        db.commit()
+        db.refresh(nuevo_doc)
+        
+        return nuevo_doc
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Error al procesar y guardar el documento: {str(e)}"
+        )
 
 @router.get("/", response_model=List[schemas.DocumentoResponse])
 def listar_documentos(db: Session = Depends(get_db)):
@@ -44,45 +92,71 @@ async def importar_csv(
     texto = contenido.decode('utf-8-sig')
     reader = csv.DictReader(io.StringIO(texto), delimiter=';')
 
+    from supabase import create_client
+    import os
+    supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+    bucket_name = "documentos"
     insertados = 0
-    for row in reader:
-        try:
-            año_val = row.get('Año', '')
-            mes_val = row.get('Mes', '')
-            doc = models.Documento(
-                codigo      = row.get('Número del acto administrativo aprobatorio', ''),
-                tipo        = row.get('Tipo documento', row.get('Tipo de Compra', '')),
-                categoria   = row.get('Categoría', row.get('Tipo de Compra', '')),
-                area        = row.get('Tipo de Compra', ''),
-                fecha_pub   = row.get('Fecha de publicación', row.get('Fecha del acto administrativo aprobatorio del contrato', '')),
-                descripcion = row.get('Descripción', row.get('Objeto de la contratación o adquisición', '')),
-                enlace      = row.get('Texto', row.get('Enlace al texto integro del contrato', '')),
-                año         = int(año_val) if año_val.isdigit() else None,
-                mes         = _mes_a_numero(mes_val),
-            )
-            db.add(doc)
-            insertados += 1
-        except Exception:
-            continue
+    
+    # Función interna auxiliar para no repetir código de descarga/subida
+    async def descargar_y_subir_a_supabase(client_http, html_enlace, prefijo, codigo_doc):
+        if not html_enlace:
+            return None
+        match = re.search(r'href=["\']([^"\']+)["\']', html_enlace)
+        if match:
+            url_original = match.group(1)
+            try:
+                response = await client_http.get(url_original, timeout=15.0)
+                if response.status_code == 200:
+                    nombre_archivo = f"{prefijo}_{codigo_doc}_{int(time.time())}.pdf"
+                    supabase_client.storage.from_(bucket_name).upload(
+                        path=nombre_archivo,
+                        file=response.content,
+                        file_options={"content-type": "application/pdf"}
+                    )
+                    return supabase_client.storage.from_(bucket_name).get_public_url(nombre_archivo)
+            except Exception as e:
+                print(f"Error procesando {prefijo} para {codigo_doc}: {e}")
+        return None
 
-        try:
-            monto_str = re.sub(r'[^\d]', '', row.get('Monto total de la operación', '0'))
-            monto = int(monto_str) if monto_str else 0
-            
-            if monto > 0 and año_val.isdigit():
-                gasto = models.Gasto(
-                    año   = int(año_val),
-                    mes   = _mes_a_numero(mes_val),
-                    area  = row.get('Tipo de Compra', 'Sin categoría'),
-                    monto = monto,
+    async with httpx.AsyncClient() as client:
+        for row in reader:
+            try:
+                codigo_doc = row.get('Número del acto administrativo aprobatorio', 'doc').replace('/', '_')
+                
+                # Columnas del CSV correspondientes a los dos archivos
+                columna_contrato = row.get('Enlace al texto integro del contrato', '')
+                columna_acto = row.get('Enlace al texto integro del acto administrativo aprobatorio', '')
+
+                # Descargamos y subimos de forma independiente cada uno
+                url_supabase_contrato = await descargar_y_subir_a_supabase(client, columna_contrato, "contrato", codigo_doc)
+                url_supabase_acto = await descargar_y_subir_a_supabase(client, columna_acto, "resolucion", codigo_doc)
+
+                # Si falló la descarga, usamos el HTML original como respaldo para no perder el dato
+                doc = models.Documento(
+                    codigo      = row.get('Número del acto administrativo aprobatorio', ''),
+                    tipo        = row.get('Tipo documento', row.get('Tipo de Compra', '')),
+                    categoria   = row.get('Categoría', row.get('Tipo de Compra', '')),
+                    area        = row.get('Tipo de Compra', ''),
+                    fecha_pub   = row.get('Fecha del acto administrativo aprobatorio del contrato', ''),
+                    descripcion = row.get('Objeto de la contratación o adquisición', ''),
+                    
+                    # Guardamos las dos URLs independientes
+                    enlace_contrato = url_supabase_contrato if url_supabase_contrato else columna_contrato,
+                    enlace_acto     = url_supabase_acto if url_supabase_acto else columna_acto,
+                    
+                    año         = int(row.get('Año')) if row.get('Año', '').isdigit() else None,
+                    mes         = _mes_a_numero(row.get('Mes', '')),
                 )
-                db.add(gasto)
-        except Exception:
-            pass
+                db.add(doc)
+                insertados += 1
+            except Exception as e:
+                print(f"Error en fila: {e}")
+                continue
 
-    db.commit()
-    return {"mensaje": f"{insertados} documentos importados"}
-
+        db.commit()
+        
+    return {"mensaje": f"{insertados} registros importados con sus respectivos documentos."}
 
 def _mes_a_numero(mes_str: str) -> int:
     meses = {
@@ -92,13 +166,11 @@ def _mes_a_numero(mes_str: str) -> int:
     }
     return meses.get(mes_str.lower().strip(), 1)
 
-# Descargar todos como CSV
 @router.get("/descargar/todos")
 def descargar_todos_csv(db: Session = Depends(get_db)):
     documentos = db.query(models.Documento).order_by(models.Documento.id.desc()).all()
     return _generar_csv(documentos, "documentos_todos.csv")
 
-# Descargar uno como CSV
 @router.get("/descargar/{doc_id}")
 def descargar_uno_csv(doc_id: int, db: Session = Depends(get_db)):
     doc = db.query(models.Documento).filter(models.Documento.id == doc_id).first()
@@ -122,7 +194,7 @@ def _generar_csv(documentos, filename: str):
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
-# UPDATE (PUT)
+
 @router.put("/{doc_id}", response_model=schemas.DocumentoResponse)
 def actualizar_documento(
     doc_id: int, 
@@ -142,7 +214,6 @@ def actualizar_documento(
     db.refresh(db_doc)
     return db_doc
 
-# DELETE
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_documento(
     doc_id: int, 
