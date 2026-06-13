@@ -1,173 +1,192 @@
 import React, { useState, useEffect } from 'react';
 import {
-  IonPage, IonHeader, IonToolbar, IonContent, IonButton, IonIcon, IonSpinner,
+  IonPage,
+  IonContent,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonBackButton,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonBadge,
+  IonButton,
+  IonSpinner,
+  IonIcon,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonCard
 } from '@ionic/react';
-import { personOutline, arrowBackOutline } from 'ionicons/icons';
+import { documentTextOutline, chevronForwardOutline, timeOutline, checkmarkCircleOutline, alertCircleOutline, arrowBackOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import { solicitudesService } from '../services/api';
 
-const badgeColor: Record<string, { bg: string; color: string }> = {
-  pendiente:  { bg: '#fff3cd', color: '#856404' },
-  respondida: { bg: '#d1e7dd', color: '#0f5132' },
-};
+
+interface Solicitud {
+  id: number;
+  folio: string;
+  ciudadano: string;
+  fecha: string;
+  extracto: string;
+  estado: 'pendiente' | 'respondida' | 'expirada';
+}
 
 const AdminGestion: React.FC = () => {
   const history = useHistory();
-  const [solicitudes, setSolicitudes] = useState<any[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState('');
-  const [filtro, setFiltro]           = useState('Todos');
+  const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
+  const [cargando, setCargando] = useState(true);
 
+  // ── DATOS SINTÉTICOS DE SOLICITUDES PARA PRUEBAS ──
   useEffect(() => {
-    solicitudesService.listar()
-      .then(data => setSolicitudes(data))
-      .catch(() => setError('Error al cargar las solicitudes'))
-      .finally(() => setLoading(false));
+    setCargando(true);
+    setTimeout(() => {
+      setSolicitudes([
+        { id: 1, folio: 'TRA-2026-001', ciudadano: 'Juan Pérez Silva', fecha: '08/06/2026', extracto: 'Solicita copia de los gastos en luminarias públicas del sector norte.', estado: 'pendiente' },
+        { id: 2, folio: 'TRA-2026-002', ciudadano: 'María Angélica Soto', fecha: '02/06/2026', extracto: 'Solicitud de actas de la comisión de salud sobre planes comunales.', estado: 'respondida' },
+        { id: 3, folio: 'TRA-2026-003', ciudadano: 'Carlos Muñoz Rojas', fecha: '15/05/2026', extracto: 'Pide información sobre decretos de licitación de recolección de residuos.', estado: 'pendiente' },
+        { id: 4, folio: 'TRA-2026-004', ciudadano: 'Patricia Vergara M.', fecha: '10/04/2026', extracto: 'Solicita organigrama de sueldos del personal de la dirección de obras.', estado: 'expirada' },
+      ]);
+      setCargando(false);
+    }, 600);
   }, []);
 
-  const filtradas = filtro === 'todos'
-    ? solicitudes
-    : solicitudes.filter(s => s.estado === filtro);
+  // Configuración de colores y etiquetas según el estado de la solicitud chilenas
+  const obtenerBadgeEstado = (estado: string) => {
+    switch (estado) {
+      case 'pendiente':
+        return <IonBadge style={{ '--background': '#ffc107', color: '#15305b', padding: '6px 10px', borderRadius: '8px', fontWeight: 'bold' }}>PENDIENTE</IonBadge>;
+      case 'respondida':
+        return <IonBadge style={{ '--background': '#28a745', color: 'white', padding: '6px 10px', borderRadius: '8px', fontWeight: 'bold' }}>RESPONDIDA</IonBadge>;
+      case 'expirada':
+        return <IonBadge style={{ '--background': '#dc3545', color: 'white', padding: '6px 10px', borderRadius: '8px', fontWeight: 'bold' }}>EXPIRADA</IonBadge>;
+      default:
+        return null;
+    }
+  };
 
   return (
     <IonPage>
+      {/* HEADER */}
       <IonHeader className="ion-no-border">
-        <IonToolbar style={{ '--background': '#15305b' }}>
-          <div style={{
-            display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
-            gap: '28px', padding: '10px 30px', fontSize: '13px', color: '#ffffff',
-            borderBottom: '1px solid rgba(255,255,255,0.15)',
+        <IonToolbar style={{ '--background': '#15305b', '--color': 'white', paddingTop: '8px', paddingBottom: '8px' }}>
+          
+          <IonButtons slot="start" style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', gap: '4px' }}>
+            
+            {/* ESTE ES EL NUEVO BOTÓN QUE NO FALLA */}
+            <IonButton 
+              style={{ color: 'white', '--padding-start': '0', '--padding-end': '8px' }} 
+              onClick={() => history.push('/admin/dashboard')}
+            >
+              <IonIcon slot="icon-only" icon={arrowBackOutline} style={{ fontSize: '24px' }} />
+            </IonButton>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <img 
+                src="/SantoDomingoIcono.png" 
+                alt="Logo" 
+                style={{ width: '36px', height: '36px', objectFit: 'contain', filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.2))' }} 
+              />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '9px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', lineHeight: '1.2' }}>
+                  Municipalidad de
+                </span>
+                <span style={{ color: '#ffffff', fontSize: '13px', fontWeight: 'bold', lineHeight: '1.1' }}>
+                  Santo Domingo
+                </span>
+              </div>
+            </div>
+          </IonButtons>
+
+          <IonTitle style={{ 
+            position: 'absolute', 
+            left: '50%', 
+            top: '50%',
+            transform: 'translate(-50%, -50%)', 
+            fontWeight: 'bold', 
+            fontSize: '16px', 
+            width: 'auto',
+            zIndex: 10,
+            padding: 0,
+            margin: 0
           }}>
-            <span style={{ cursor: 'pointer' }}>Plataforma Ley Lobby</span>
-            <span style={{ cursor: 'pointer' }}>Transparencia Activa</span>
-            <span style={{ cursor: 'pointer' }}>Solicitud Ley de Transparencia</span>
-            <span style={{ cursor: 'pointer' }}>Decretos</span>
-            <span style={{ color: '#f1c40f', fontWeight: 'bold', cursor: 'pointer' }}>Consejo Municipal en VIVO</span>
-          </div>
+            Gestión de Solicitudes
+          </IonTitle>
+
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{ '--background': '#f0f2f5' }}>
-        <div style={{
-          backgroundColor: '#15305b', padding: '28px 30px 100px 30px', color: 'white',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-          borderBottomRightRadius: '80px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <IonButton fill="clear" onClick={() => history.push('/admin/dashboard')}
-              style={{ '--padding-start': '0', '--padding-end': '8px', '--color': 'rgba(255,255,255,0.8)' }}>
-              <IonIcon icon={arrowBackOutline} style={{ fontSize: '20px' }} />
-            </IonButton>
-            <div>
-              <h2 style={{ margin: 0, fontWeight: '700', fontSize: '20px' }}>Bandeja de Solicitudes</h2>
-              <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.65)', fontSize: '13px' }}>
-                Gestión de requerimientos ciudadanos
-              </p>
-            </div>
-          </div>
-          <IonButton color="light" style={{
-            width: '48px', height: '48px', '--border-radius': '50%',
-            '--padding-start': '0', '--padding-end': '0', marginTop: '6px',
-          }}>
-            <IonIcon icon={personOutline} style={{ color: '#15305b', fontSize: '22px' }} />
-          </IonButton>
+      <IonContent className="ion-padding" style={{ '--background': '#f4f6f9' }}>
+      
+        <div style={{ padding: '10px 0 20px 0' }}>
+          <h2 style={{ color: '#15305b', fontWeight: 'bold', margin: '0', fontSize: '22px' }}>
+            Bandeja de Transparencia
+          </h2>
+          <p style={{ color: '#666', margin: '5px 0 0 0', fontSize: '14px' }}>
+            Revisa, fiscaliza y responde los requerimientos ingresados por la comunidad.
+          </p>
         </div>
 
-        <div style={{ marginTop: '-70px', padding: '0 24px 40px 24px' }}>
-          <div style={{
-            backgroundColor: 'white', borderRadius: '16px',
-            boxShadow: '0 4px 14px rgba(0,0,0,0.08)', overflow: 'hidden',
-          }}>
-            {/* Header con filtro */}
-            <div style={{
-              padding: '20px 24px', display: 'flex', justifyContent: 'space-between',
-              alignItems: 'center', borderBottom: '1px solid #f0f0f0',
-            }}>
-              <h3 style={{ margin: 0, fontWeight: '700', color: '#1a1a2e', fontSize: '16px' }}>
-                Gestión de Solicitudes
-              </h3>
-              <select value={filtro} onChange={e => setFiltro(e.target.value)}
-                style={{
-                  padding: '8px 14px', borderRadius: '10px', border: '1px solid #ddd',
-                  fontSize: '13px', color: '#333', backgroundColor: '#f9f9f9', outline: 'none',
-                }}>
-                <option value="todos">Todos los estados</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="respondida">Respondida</option>
-              </select>
-            </div>
-
-            {loading && (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-                <IonSpinner name="crescent" style={{ color: '#15305b' }} />
-              </div>
-            )}
-
-            {error && (
-              <div style={{ padding: '20px', color: '#842029', backgroundColor: '#f8d7da' }}>
-                {error}
-              </div>
-            )}
-
-            {!loading && !error && filtradas.length === 0 && (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
-                No hay solicitudes para mostrar.
-              </div>
-            )}
-
-            {!loading && !error && filtradas.length > 0 && (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#f8f9fa' }}>
-                      {['Folio', 'Asunto', 'Ingreso', 'Estado', 'Acción'].map(h => (
-                        <th key={h} style={{
-                          padding: '14px 20px', textAlign: 'left', fontWeight: '600',
-                          color: '#555', fontSize: '12px', textTransform: 'uppercase',
-                          letterSpacing: '0.5px', borderBottom: '1px solid #eee',
-                        }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtradas.map((s) => {
-                      const cfg = badgeColor[s.estado] ?? { bg: '#e9ecef', color: '#495057' };
-                      return (
-                        <tr key={s.id} style={{ borderBottom: '1px solid #f5f5f5' }}>
-                          <td style={{ padding: '16px 20px', fontWeight: '600', color: '#15305b' }}>{s.folio}</td>
-                          <td style={{ padding: '16px 20px', color: '#333' }}>{s.asunto}</td>
-                          <td style={{ padding: '16px 20px', color: '#777' }}>
-                            {new Date(s.created_at).toLocaleDateString('es-CL')}
-                          </td>
-                          <td style={{ padding: '16px 20px' }}>
-                            <span style={{
-                              padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
-                              backgroundColor: cfg.bg, color: cfg.color,
-                            }}>
-                              {s.estado.charAt(0).toUpperCase() + s.estado.slice(1)}
-                            </span>
-                          </td>
-                          <td style={{ padding: '16px 20px' }}>
-                            <button
-                              onClick={() => history.push(`/admin/gestion/${s.id}`)}
-                              style={{
-                                padding: '6px 16px', borderRadius: '8px', border: 'none',
-                                cursor: 'pointer', fontSize: '13px', fontWeight: '600',
-                                backgroundColor: s.estado === 'pendiente' ? '#15305b' : '#f0f2f5',
-                                color: s.estado === 'pendiente' ? 'white' : '#555',
-                              }}>
-                              {s.estado === 'pendiente' ? 'Gestionar' : 'Ver'}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+        {cargando ? (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '60px' }}>
+            <IonSpinner name="crescent" style={{ color: '#1a9cd8' }} />
           </div>
-        </div>
+        ) : (
+          <IonGrid style={{ padding: 0 }}>
+            <IonRow>
+              <IonCol size="12">
+                <IonCard style={{ borderRadius: '16px', margin: '0', border: '1px solid #e0e0e0', boxShadow: 'none', overflow: 'hidden' }}>
+                  <IonList lines="full" style={{ padding: 0 }}>
+                    {solicitudes.length === 0 ? (
+                      <IonItem lines="none">
+                        <IonLabel className="ion-text-center" style={{ padding: '40px 0', color: '#888' }}>
+                          No hay solicitudes ingresadas en el sistema.
+                        </IonLabel>
+                      </IonItem>
+                    ) : (
+                      solicitudes.map((sol) => (
+                        <IonItem 
+                          key={sol.id} 
+                          button 
+                          detail={false}
+                          onClick={() => history.push(`/admin/solicitud/${sol.id}`)}
+                          style={{ '--padding-start': '20px', '--padding-end': '16px', '--min-height': '85px' }}
+                        >
+                          {/* Ícono de documento oficial */}
+                          <IonIcon 
+                            icon={documentTextOutline} 
+                            slot="start" 
+                            style={{ color: '#15305b', fontSize: '24px', backgroundColor: '#f0f4f8', padding: '10px', borderRadius: '12px', marginRight: '16px' }} 
+                          />
+                          
+                          <IonLabel style={{ whiteSpace: 'normal' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                              <span style={{ fontWeight: 'bold', color: '#15305b', fontSize: '15px' }}>{sol.folio}</span>
+                              <span style={{ color: '#888', fontSize: '12px' }}>• {sol.fecha}</span>
+                            </div>
+                            <h3 style={{ fontWeight: '600', color: '#333', margin: '0 0 4px 0', fontSize: '14px' }}>
+                              De: {sol.ciudadano}
+                            </h3>
+                            <p style={{ color: '#666', fontSize: '13px', margin: '0', lineHeight: '1.3' }}>
+                              {sol.extracto}
+                            </p>
+                          </IonLabel>
+
+                          {/* Estado al extremo derecho */}
+                          <div slot="end" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {obtenerBadgeEstado(sol.estado)}
+                            <IonIcon icon={chevronForwardOutline} style={{ color: '#ccc', fontSize: '18px' }} />
+                          </div>
+                        </IonItem>
+                      ))
+                    )}
+                  </IonList>
+                </IonCard>
+              </IonCol>
+            </IonRow>
+          </IonGrid>
+        )}
+
       </IonContent>
     </IonPage>
   );

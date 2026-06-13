@@ -24,7 +24,8 @@ import {
   reorderThreeOutline,
   informationCircleOutline,
   documentTextOutline,
-  libraryOutline
+  libraryOutline,
+  shieldCheckmarkOutline
 } from 'ionicons/icons';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -141,11 +142,16 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
                   No has iniciado sesión <br/><span style={{ fontSize: '12px', color: '#4ab8e8' }}>Modo visitante</span>
                 </span>
               )}
+              
               <IonButton color="light"
                 onClick={() => {
-                  if (isAuth && userRole === 'ciudadano') history.push('/app/perfil');
-                  else if (isAuth && userRole === 'admin') history.push('/admin/perfil');
-                  else history.push('/login');
+                  if (!isAuth) {
+                    history.push('/login'); // Invitados van al login
+                  } else if (userRole === 'admin') {
+                    history.push('/admin/perfil'); // El administrador va a sus propios datos
+                  } else {
+                    history.push('/app/perfil'); // El ciudadano va a sus propios datos
+                  }
                 }}
                 style={{ width: '48px', height: '48px', '--border-radius': '50%', '--padding-start': '0', '--padding-end': '0' }}
               >
@@ -154,7 +160,7 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
             </div>
           </div>
 
-          {/*Botones Rápidos */}
+          {/* Fila 2: Botones Rápidos */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <IonButton 
               onClick={() => isAuth ? history.push('/app/nueva-solicitud') : history.push('/login')}
@@ -171,9 +177,19 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
               <IonIcon icon={libraryOutline} slot="start" style={{ fontSize: '16px' }}/>
               Decretos
             </IonButton>
+
+            {isAuth && userRole === 'admin' && (
+              <IonButton 
+                onClick={() => history.push('/admin/dashboard')}
+                style={{ '--background': '#ffc107', '--color': '#15305b', '--border-radius': '20px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: 'bold', textTransform: 'none' }}
+              >
+                <IonIcon icon={shieldCheckmarkOutline} slot="start" style={{ fontSize: '16px' }}/>
+                Volver al panel de administrador
+              </IonButton>
+            )}
           </div>
 
-          {/*Filtros */}
+          {/* Fila 3: Filtros */}
           <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
             {[
                 { label: 'Año', value: selectedYear, setter: setSelectedYear, options: años.map(a => [a, a]), minWidth: '110px' },
