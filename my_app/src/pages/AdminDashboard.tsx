@@ -59,30 +59,55 @@ const AdminDashboard: React.FC = () => {
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
             <input
-            type="file"
-            id="csv-upload"
-            accept=".csv"
-            style={{ display: 'none' }}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              const formData = new FormData();
-              formData.append('file', file);
-              try {
-                const token = localStorage.getItem('token');
-                const res = await fetch('http://localhost:8000/documentos/importar', {
-                  method: 'POST',
-                  headers: { Authorization: `Bearer ${token}` },
-                  body: formData,
-                });
-                const data = await res.json();
-                alert(data.mensaje);
-                localStorage.setItem('ultima_importacion', Date.now().toString());
-              } catch {
-                alert('Error al importar el archivo');
-              }
-            }}
-          />
+              type="file"
+              id="csv-upload"
+              accept=".csv"
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+
+                try {
+                  const token = localStorage.getItem('token');
+
+                  const formDataDoc = new FormData();
+                  formDataDoc.append('file', file);
+
+                  const resDoc = await fetch('http://localhost:8000/documentos/importar', {
+                    method: 'POST',
+                    headers: {
+                      Authorization: `Bearer ${token}`
+                    },
+                    body: formDataDoc
+                  });
+
+                  const dataDoc = await resDoc.json();
+
+                  const formDataGastos = new FormData();
+                  formDataGastos.append('file', file);
+
+                  const resGastos = await fetch('http://localhost:8000/gastos/importar', {
+                    method: 'POST',
+                    headers: {
+                      Authorization: `Bearer ${token}`
+                    },
+                    body: formDataGastos
+                  });
+
+                  const dataGastos = await resGastos.json();
+
+                  alert(
+                    `Documentos: ${dataDoc.mensaje}\nGastos: ${dataGastos.mensaje}`
+                  );
+
+                  localStorage.setItem('ultima_importacion', Date.now().toString());
+
+                } catch (error) {
+                  console.error(error);
+                  alert('Error al importar el archivo');
+                }
+              }}
+            />
           <IonButton
               color="light"
               onClick={() => document.getElementById('csv-upload')?.click()}

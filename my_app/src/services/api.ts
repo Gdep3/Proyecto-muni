@@ -40,28 +40,32 @@ const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
 
 //Auth 
 export const authService = {
-  // Función para obtener el Token y el Rol
   login: async (rut: string, contrasena: string) => {
-    const formData = new URLSearchParams();
-    formData.append('username', rut); 
-    formData.append('password', contrasena);
 
     const loginResponse = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        rut: rut,
+        password: contrasena
+      })
     });
 
     if (!loginResponse.ok) {
+      const error = await loginResponse.text();
+      console.error(error);
       throw new Error('Credenciales incorrectas');
     }
 
     const tokenData = await loginResponse.json();
     localStorage.setItem('token', tokenData.access_token);
 
-    // Segunda petición para traer el perfil y el rol
-    const userResponse = await fetch(`${BASE_URL}/auth/me`, { 
-      headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+    const userResponse = await fetch(`${BASE_URL}/auth/me`, {
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`
+      }
     });
 
     if (!userResponse.ok) {
@@ -73,10 +77,10 @@ export const authService = {
 
     return {
       success: true,
-      role: userData.rol 
+      role: userData.rol
     };
   },
-
+  
   register: async (datos: any) => {
     const res = await fetch(`${BASE_URL}/auth/register`, {
       method: 'POST',
