@@ -10,8 +10,6 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const history = useHistory();
-  
-  // Estados limpios y sin duplicados
   const [rut, setRut] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -88,33 +86,16 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     {isLoading ? 'Conectando...' : 'Iniciar Sesión'}
                   </button>
                   
-                  <div className="text-center mt-3">
-                    <a href="#" className="small text-muted" style={{ textDecoration: 'underline' }}>¿Olvidaste la contraseña?</a>
-                  </div>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-primary w-100 mt-3" 
+                    style={{ borderRadius: '8px', padding: '10px', borderColor: '#006FB3', color: '#006FB3', fontWeight: 'bold' }}
+                    onClick={() => history.push('/registro')}
+                  >
+                    Crear Nueva Cuenta
+                  </button>
                 </form>
                 
-                <div className="mt-3">
-                  <p className="text-muted small text-center mb-2">— Acceso rápido (solo pruebas) —</p>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      type="button"
-                      className="btn btn-outline-primary w-100"
-                      style={{ borderRadius: '8px', fontSize: '13px' }}
-                      onClick={() => { onLogin?.('ciudadano'); history.push('/app/inicio'); }}
-                    >
-                      Entrar como Ciudadano
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline-danger w-100"
-                      style={{ borderRadius: '8px', fontSize: '13px' }}
-                      onClick={() => { onLogin?.('admin'); history.push('/admin/dashboard'); }}
-                    >
-                      Entrar como Admin
-                    </button>
-                  </div>
-                </div>
-
               </div>
             </div>
           </div>

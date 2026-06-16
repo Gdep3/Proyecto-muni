@@ -44,12 +44,28 @@ def login(datos: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(ge
     
     usuario = db.query(models.Usuario).filter(models.Usuario.rut == datos.username).first()
 
-    if not usuario or not verify_password(datos.password, usuario.password):
+    if not usuario:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="RUT o contraseña incorrectos",
         )
 
+    es_contrasena_valida = False
+
+    try:
+        es_contrasena_valida = verify_password(datos.password, usuario.password)
+    
+    except ValueError:
+        if datos.password == usuario.password:
+            es_contrasena_valida = True
+            usuario.password = hash_password(datos.password) 
+            db.commit()
+
+    if not es_contrasena_valida:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="RUT o contraseña incorrectos",
+        )
     token = create_access_token(data={"sub": usuario.rut, "rol": usuario.rol})
 
     return {
@@ -88,3 +104,16 @@ def update_me(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+#--DELETE Cuenta -- #
+@router.delete("/me", status_code=204)
+def eliminar_mi_cuenta(
+    current_user: models.Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # Primero eliminar las solicitudes del usuario
+    db.query(models.Solicitud).filter(
+        models.Solicitud.usuario_id == current_user.id
+    ).delete()
+    db.delete(current_user)
+    db.commit()

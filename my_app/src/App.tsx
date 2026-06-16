@@ -42,8 +42,9 @@ setupIonicReact();
 
 const App: React.FC = () => {
   const [isAuth, setIsAuth]     = useState(authService.isAuth());
+  const initialRole = authService.getRol();
   const [userRole, setUserRole] = useState<'ciudadano' | 'admin'>(
-    authService.getRol() ?? 'ciudadano'
+    initialRole === 'admin' ? 'admin' : 'ciudadano'
   );
 
   const handleLogout = () => {
@@ -106,6 +107,13 @@ const App: React.FC = () => {
          <PrivateRoute
             exact path="/admin/perfil"
             render={() => <AppPerfil onLogout={handleLogout} backRoute="/admin/dashboard" />}
+            isAuthenticated={isAuth}
+            requiredRole="admin"
+            userRole={userRole}
+          />
+          <PrivateRoute
+            exact path="/admin/solicitud/:id"
+            component={DetalleSolicitud}
             isAuthenticated={isAuth}
             requiredRole="admin"
             userRole={userRole}

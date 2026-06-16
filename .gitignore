@@ -10,7 +10,9 @@ coverage/
 # ─── VARIABLES DE ENTORNO (¡CRÍTICO PARA SEGURIDAD!) ───
 .env
 .env.*
-!.env.example
+
+.venv
+__pycache__/
 
 # ─── LOGS Y CACHÉ ───
 npm-debug.log*

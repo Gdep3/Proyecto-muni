@@ -1,162 +1,131 @@
 import React from 'react';
-import {
-  IonPage, IonContent, IonButton, IonIcon,
+import { 
+  IonPage, IonContent, IonHeader, IonToolbar, IonTitle, 
+  IonButton, IonIcon, IonGrid, IonRow, IonCol, 
+  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButtons 
 } from '@ionic/react';
-import {
-  personOutline, documentTextOutline, peopleOutline,
-  checkmarkCircleOutline, timeOutline, trendingUpOutline, shareOutline
-} from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import HeaderLinks from '../components/HeaderLink';
+import { 
+  peopleOutline, documentTextOutline, globeOutline, personOutline, logOutOutline
+} from 'ionicons/icons';
 
-/* ─── Componente ───────────────────────────────────────────────── */
 const AdminDashboard: React.FC = () => {
   const history = useHistory();
 
-  const kpis = [
-    { label: 'Solicitudes Totales', valor: '154', color: '#1a9cd8', icon: documentTextOutline },
-    { label: 'Pendientes de Revisión', valor: '28', color: '#f0a500', icon: timeOutline },
-    { label: 'Tasa de Respuesta', valor: '94.2%', color: '#27ae60', icon: trendingUpOutline },
-  ];
-
-  const accesos = [
-    {
-      titulo: 'Bandeja de Requerimientos',
-      desc: 'Revisar, clasificar y responder las solicitudes de información ciudadana.',
-      ruta: '/admin/gestion',
-      label: 'Ir a Gestión',
-      color: '#15305b',
-    },
-    {
-      titulo: 'Mantenedor de Cuentas',
-      desc: 'Administración de perfiles de usuarios y niveles de privilegios.',
-      ruta: '/admin/usuarios',
-      label: 'Gestionar Usuarios',
-      color: '#1a9cd8',
-    },
-  ];
+  const cerrarSesion = () => {
+    // Si tuvieras un token guardado, aquí se borraría: localStorage.removeItem('token');
+    history.push('/'); // Volvemos a la pantalla de inicio principal
+    window.location.reload(); // Recargamos para limpiar los estados de sesión
+  };
 
   return (
     <IonPage>
-      {/* ── BARRA SUPERIOR ── */}
-      <HeaderLinks />
-
-      <IonContent style={{ '--background': '#f0f2f5' }}>
-
-        {/* ── FRANJA AZUL ── */}
-        <div style={{
-          backgroundColor: '#15305b', padding: '28px 30px 100px 30px',
-          color: 'white', display: 'flex', justifyContent: 'space-between',
-          alignItems: 'flex-start', borderBottomRightRadius: '80px',
-        }}>
-          <div>
-            <h2 style={{ margin: 0, fontWeight: '700', fontSize: '20px' }}>
-              Panel de Control Administrativo
-            </h2>
-            <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.65)', fontSize: '13px' }}>
-              Gestión Interna — Municipalidad de Santo Domingo
-            </p>
+      <IonHeader className="ion-no-border">
+        <IonToolbar style={{ '--background': '#15305b', '--color': 'white' }}>
+          <div slot="start" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '16px' }}>
+            <img 
+              src="/SantoDomingoIcono.png" 
+              alt="Logo Santo Domingo" 
+              style={{ width: '42px', height: '42px', objectFit: 'contain', filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.2))' }} 
+            />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', lineHeight: '1.2' }}>
+                Municipalidad de
+              </span>
+              <span style={{ color: '#ffffff', fontSize: '15px', fontWeight: 'bold', lineHeight: '1.1' }}>
+                Santo Domingo
+              </span>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <input
-            type="file"
-            id="csv-upload"
-            accept=".csv"
-            style={{ display: 'none' }}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              const formData = new FormData();
-              formData.append('file', file);
-              try {
-                const token = localStorage.getItem('token');
-                const res = await fetch('http://localhost:8000/documentos/importar', {
-                  method: 'POST',
-                  headers: { Authorization: `Bearer ${token}` },
-                  body: formData,
-                });
-                const data = await res.json();
-                alert(data.mensaje);
-                localStorage.setItem('ultima_importacion', Date.now().toString());
-              } catch {
-                alert('Error al importar el archivo');
-              }
-            }}
-          />
-          <IonButton
-              color="light"
-              onClick={() => document.getElementById('csv-upload')?.click()}
-              style={{
-                width: '48px', height: '48px', '--border-radius': '50%',
-                '--padding-start': '0', '--padding-end': '0',
-              }}
+
+          {/* Título del Panel */}
+          <IonTitle style={{ 
+            position: 'absolute', 
+            left: '50%', 
+            transform: 'translateX(-50%)', 
+            fontWeight: 'bold', 
+            fontSize: '16px', 
+            textAlign: 'center', 
+            padding: '0',
+            width: 'auto'
+          }}>
+            Panel de Control
+          </IonTitle>
+
+          
+          {/* Botón de Perfil del Administrador */}
+          <IonButtons slot="end" style={{ marginRight: '8px' }}>
+            <IonButton 
+              style={{ color: 'white' }} 
+              onClick={() => history.push('/admin/perfil')}
             >
-              <IonIcon icon={shareOutline} style={{ color: '#15305b', fontSize: '22px' }} />
+              <IonIcon slot="icon-only" icon={personOutline} style={{ fontSize: '24px' }} />
             </IonButton>
-            <IonButton color="light" onClick={() => history.push('/admin/perfil')}
-               style={{
-              width: '48px', height: '48px', '--border-radius': '50%',
-              '--padding-start': '0', '--padding-end': '0',
-            }}>
-              <IonIcon icon={personOutline} style={{ color: '#15305b', fontSize: '22px' }} />
-            </IonButton>
-          </div>
+          </IonButtons>
+
+        </IonToolbar>
+      </IonHeader>
+      
+
+      <IonContent className="ion-padding" style={{ '--background': '#f4f6f9' }}>
+        <div style={{ padding: '20px 0', textAlign: 'center' }}>
+          <h2 style={{ color: '#15305b', fontWeight: 'bold', margin: '0 0 10px 0' }}>
+            Bienvenido al Centro de Control
+          </h2>
+          <p style={{ color: '#666', margin: '0' }}>
+            Gestiona usuarios y solicitudes de la Municipalidad de Santo Domingo.
+          </p>
         </div>
 
-        {/* ── CONTENIDO ── */}
-        <div style={{ marginTop: '-70px', padding: '0 24px 40px 24px' }}>
+        <IonGrid style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <IonRow>
+            {/* Tarjeta: Gestión de Usuarios */}
+            <IonCol size="12" sizeMd="6">
+              <IonCard button onClick={() => history.push('/admin/usuarios')} style={{ borderRadius: '15px', height: '100%', margin: '10px 0' }}>
+                <IonCardHeader>
+                  <IonIcon icon={peopleOutline} style={{ fontSize: '45px', color: '#1a9cd8' }} />
+                  <IonCardTitle style={{ fontWeight: 'bold', marginTop: '10px', fontSize: '18px' }}>Gestión de Usuarios</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent style={{ fontSize: '14px', color: '#555' }}>
+                  Administra los roles, asciende a nuevos administradores y revisa las cuentas registradas en la plataforma.
+                </IonCardContent>
+              </IonCard>
+            </IonCol>
 
-          {/* KPIs */}
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
-            {kpis.map((k) => (
-              <div key={k.label} style={{
-                flex: '1 1 180px', backgroundColor: 'white', borderRadius: '16px',
-                padding: '20px 24px', boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
-                display: 'flex', alignItems: 'center', gap: '16px',
-              }}>
-                <div style={{
-                  width: '48px', height: '48px', borderRadius: '12px',
-                  backgroundColor: `${k.color}18`, display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <IonIcon icon={k.icon} style={{ color: k.color, fontSize: '24px' }} />
-                </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: '12px', color: '#888', fontWeight: '500' }}>{k.label}</p>
-                  <p style={{ margin: 0, fontSize: '28px', fontWeight: '700', color: '#1a1a2e' }}>{k.valor}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+            {/* Tarjeta: Gestión de Solicitudes */}
+            <IonCol size="12" sizeMd="6">
+              <IonCard button onClick={() => history.push('/admin/gestion')} style={{ borderRadius: '15px', height: '100%', margin: '10px 0' }}>
+                <IonCardHeader>
+                  <IonIcon icon={documentTextOutline} style={{ fontSize: '45px', color: '#1a9cd8' }} />
+                  <IonCardTitle style={{ fontWeight: 'bold', marginTop: '10px', fontSize: '18px' }}>Trámites y Solicitudes</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent style={{ fontSize: '14px', color: '#555' }}>
+                  Revisa, gestiona y responde las solicitudes de Ley de Transparencia enviadas por los ciudadanos.
+                </IonCardContent>
+              </IonCard>
+            </IonCol>
 
-          {/* Accesos */}
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-            {accesos.map((a) => (
-              <div key={a.titulo} style={{
-                flex: '1 1 280px', backgroundColor: 'white', borderRadius: '16px',
-                padding: '28px 24px', boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
-              }}>
-                <h3 style={{ margin: '0 0 8px', fontWeight: '700', color: '#1a1a2e', fontSize: '17px' }}>
-                  {a.titulo}
-                </h3>
-                <p style={{ margin: '0 0 24px', color: '#777', fontSize: '13px', lineHeight: '1.6' }}>
-                  {a.desc}
-                </p>
-                <IonButton
-                  expand="block"
-                  onClick={() => history.push(a.ruta)}
-                  style={{
-                    '--background': a.color, '--border-radius': '12px',
-                    '--box-shadow': 'none', fontWeight: '600',
-                  }}
-                >
-                  {a.label}
-                </IonButton>
-              </div>
-            ))}
-          </div>
-
-        </div>
+            {/* Botón: Ir al Portal Público */}
+            <IonCol size="12">
+              <IonButton 
+                expand="block" 
+                onClick={() => history.push('/')}
+                style={{ 
+                  '--background': '#28a745', 
+                  '--color': 'white',
+                  '--border-radius': '12px', 
+                  height: '60px', 
+                  marginTop: '20px', 
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                }}
+              >
+                <IonIcon slot="start" icon={globeOutline} style={{ fontSize: '24px' }} />
+                Ir al Portal Público
+              </IonButton>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
       </IonContent>
     </IonPage>
   );
