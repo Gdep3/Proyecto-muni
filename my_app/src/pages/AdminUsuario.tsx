@@ -28,21 +28,21 @@ const AdminUsuario: React.FC = () => {
 
   useEffect(() => { cargar(); }, []);
 
-  const cambiarRol = async (id: number, rolActual: string) => {
+  const cambiarRol = async (rut: string, rolActual: string) => {
     const nuevoRol = rolActual === 'admin' ? 'ciudadano' : 'admin';
     if (!confirm(`¿Cambiar rol a ${nuevoRol}?`)) return;
     try {
-      await usuariosService.cambiarRol(id, nuevoRol);
+      await usuariosService.cambiarRol(rut, nuevoRol);
       cargar();
     } catch {
       alert('Error al cambiar el rol');
     }
   };
 
-  const eliminar = async (id: number, nombre: string) => {
+  const eliminar = async (rut: string, nombre: string) => {
     if (!confirm(`¿Eliminar al usuario ${nombre}? Esta acción no se puede deshacer.`)) return;
     try {
-      await usuariosService.eliminar(id);
+      await usuariosService.eliminar(rut);
       cargar();
     } catch {
       alert('Error al eliminar el usuario');
@@ -127,7 +127,7 @@ const AdminUsuario: React.FC = () => {
 
                   {/* Botón cambiar rol */}
                   <button
-                    onClick={() => cambiarRol(u.id, u.rol)}
+                    onClick={() => cambiarRol(u.rut, u.rol)}
                     title={u.rol === 'admin' ? 'Quitar admin' : 'Hacer admin'}
                     style={{
                       padding: '6px 10px', borderRadius: '8px', border: '1px solid #d5d5d5',
@@ -139,7 +139,7 @@ const AdminUsuario: React.FC = () => {
 
                   {/* Botón eliminar */}
                   <button
-                    onClick={() => eliminar(u.id, u.nombre)}
+                    onClick={() => eliminar(u.rut, u.nombre)}
                     title="Eliminar usuario"
                     style={{
                       padding: '6px 10px', borderRadius: '8px', border: '1px solid #f8d7da',

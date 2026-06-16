@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form 
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form, Query
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
@@ -39,7 +39,8 @@ async def crear_documento(
             categoria=categoria,
             area=area,
             descripcion=descripcion,
-            enlace=enlace_supabase, 
+            enlace_contrato=enlace_supabase,
+            enlace_acto=None,
             año=año,
             mes=mes,
             fecha_pub=fecha_pub
@@ -59,8 +60,14 @@ async def crear_documento(
         )
 
 @router.get("/", response_model=List[schemas.DocumentoResponse])
-def listar_documentos(db: Session = Depends(get_db)):
-    return db.query(models.Documento).order_by(models.Documento.id.desc()).all()
+def listar_documentos(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    db: Session = Depends(get_db)
+):
+    return db.query(models.Documento).order_by(
+        models.Documento.id.desc()
+    ).offset(skip).limit(limit).all()
 
 @router.get("/filtros")
 def obtener_filtros(db: Session = Depends(get_db)):
@@ -181,12 +188,12 @@ def descargar_uno_csv(doc_id: int, db: Session = Depends(get_db)):
 def _generar_csv(documentos, filename: str):
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['ID', 'Código', 'Tipo', 'Categoría', 'Área', 'Fecha', 'Descripción', 'Enlace', 'Año', 'Mes'])
+    writer.writerow(['ID', 'Código', 'Tipo', 'Categoría', 'Área', 'Fecha', 'Descripción', 'Enlace Contrato', 'Enlace Acto', 'Año', 'Mes'])
     for doc in documentos:
         writer.writerow([
             doc.id, doc.codigo, doc.tipo, doc.categoria,
             doc.area, doc.fecha_pub, doc.descripcion,
-            doc.enlace, doc.año, doc.mes
+            doc.enlace_contrato, doc.enlace_acto, doc.año, doc.mes
         ])
     output.seek(0)
     return StreamingResponse(

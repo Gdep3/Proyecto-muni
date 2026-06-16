@@ -11,10 +11,26 @@ from middleware.auth import get_current_user, get_current_admin
 
 router = APIRouter(prefix="/gastos", tags=["Gastos"])
 
+@router.get("/filtros")
+def obtener_filtros_gastos(db: Session = Depends(get_db)):
+    """Retorna los años y áreas disponibles en la BD para poblar los selectores del frontend."""
+    años = db.query(models.Gasto.año).distinct().filter(
+        models.Gasto.año != None
+    ).all()
+    areas = db.query(models.Gasto.area).distinct().filter(
+        models.Gasto.area != None, models.Gasto.area != ''
+    ).all()
+    return {
+        "años":  sorted([a[0] for a in años], reverse=True),
+        "areas": sorted([a[0] for a in areas]),
+    }
+
 @router.get("/", response_model=List[schemas.GastoResponse])
 def listar_gastos(
     año: Optional[int] = Query(None),
     area: Optional[str] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(500, ge=1, le=1000),
     db: Session = Depends(get_db),
 ):
     query = db.query(models.Gasto)
@@ -22,7 +38,7 @@ def listar_gastos(
         query = query.filter(models.Gasto.año == año)
     if area and area != "Total":
         query = query.filter(models.Gasto.area == area)
-    return query.all()
+    return query.offset(skip).limit(limit).all()
 
 @router.post("/importar")
 async def importar_csv(
