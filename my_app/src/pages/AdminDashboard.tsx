@@ -37,27 +37,64 @@ const AdminDashboard: React.FC = () => {
               </span>
             </div>
           </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <input
+              type="file"
+              id="csv-upload"
+              accept=".csv"
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
 
-          {/* Título del Panel */}
-          <IonTitle style={{ 
-            position: 'absolute', 
-            left: '50%', 
-            transform: 'translateX(-50%)', 
-            fontWeight: 'bold', 
-            fontSize: '16px', 
-            textAlign: 'center', 
-            padding: '0',
-            width: 'auto'
-          }}>
-            Panel de Control
-          </IonTitle>
+                try {
+                  const token = localStorage.getItem('token');
 
-          
-          {/* Botón de Perfil del Administrador */}
-          <IonButtons slot="end" style={{ marginRight: '8px' }}>
-            <IonButton 
-              style={{ color: 'white' }} 
-              onClick={() => history.push('/admin/perfil')}
+                  const formDataDoc = new FormData();
+                  formDataDoc.append('file', file);
+
+                  const resDoc = await fetch('http://localhost:8000/documentos/importar', {
+                    method: 'POST',
+                    headers: {
+                      Authorization: `Bearer ${token}`
+                    },
+                    body: formDataDoc
+                  });
+
+                  const dataDoc = await resDoc.json();
+
+                  const formDataGastos = new FormData();
+                  formDataGastos.append('file', file);
+
+                  const resGastos = await fetch('http://localhost:8000/gastos/importar', {
+                    method: 'POST',
+                    headers: {
+                      Authorization: `Bearer ${token}`
+                    },
+                    body: formDataGastos
+                  });
+
+                  const dataGastos = await resGastos.json();
+
+                  alert(
+                    `Documentos: ${dataDoc.mensaje}\nGastos: ${dataGastos.mensaje}`
+                  );
+
+                  localStorage.setItem('ultima_importacion', Date.now().toString());
+
+                } catch (error) {
+                  console.error(error);
+                  alert('Error al importar el archivo');
+                }
+              }}
+            />
+          <IonButton
+              color="light"
+              onClick={() => document.getElementById('csv-upload')?.click()}
+              style={{
+                width: '48px', height: '48px', '--border-radius': '50%',
+                '--padding-start': '0', '--padding-end': '0',
+              }}
             >
               <IonIcon slot="icon-only" icon={personOutline} style={{ fontSize: '24px' }} />
             </IonButton>

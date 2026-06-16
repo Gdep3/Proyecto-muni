@@ -40,28 +40,32 @@ const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
 
 //Auth 
 export const authService = {
-  // Función para obtener el Token y el Rol
   login: async (rut: string, contrasena: string) => {
-    const formData = new URLSearchParams();
-    formData.append('username', rut); 
-    formData.append('password', contrasena);
 
     const loginResponse = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        rut: rut,
+        password: contrasena
+      })
     });
 
     if (!loginResponse.ok) {
+      const error = await loginResponse.text();
+      console.error(error);
       throw new Error('Credenciales incorrectas');
     }
 
     const tokenData = await loginResponse.json();
     localStorage.setItem('token', tokenData.access_token);
 
-    // Segunda petición para traer el perfil y el rol
-    const userResponse = await fetch(`${BASE_URL}/auth/me`, { 
-      headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+    const userResponse = await fetch(`${BASE_URL}/auth/me`, {
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`
+      }
     });
 
     if (!userResponse.ok) {
@@ -73,10 +77,10 @@ export const authService = {
 
     return {
       success: true,
-      role: userData.rol 
+      role: userData.rol
     };
   },
-
+  
   register: async (datos: any) => {
     const res = await fetch(`${BASE_URL}/auth/register`, {
       method: 'POST',
@@ -121,11 +125,11 @@ export const solicitudesService = {
 // Usuarios (solo admin)
 export const usuariosService = {
   listar:     () => apiFetch('/usuarios'),
-  obtener:    (id: number) => apiFetch(`/usuarios/${id}`),
-  cambiarRol: (id: number, rol: string) => apiFetch(`/usuarios/${id}/rol`, {
+  obtener:    (rut: string) => apiFetch(`/usuarios/${rut}`),
+  cambiarRol: (rut: string, rol: string) => apiFetch(`/usuarios/${rut}/rol`, {
     method: 'PUT', body: JSON.stringify({ rol }),
   }),
-  eliminar:   (id: number) => apiFetch(`/usuarios/${id}`, { method: 'DELETE' }),
+  eliminar:   (rut: string) => apiFetch(`/usuarios/${rut}`, { method: 'DELETE' }),
 };
 
 // Gastos
@@ -136,6 +140,7 @@ export const gastosService = {
     if (area) params.append('area', area);
     return apiFetch(`/gastos?${params.toString()}`);
   },
+  filtros: () => apiFetch('/gastos/filtros'),
 };
 
 // Documentos 
@@ -156,4 +161,3 @@ export const perfilService = {
   actualizar:       (datos: any) => apiFetch('/auth/me', { method: 'PUT', body: JSON.stringify(datos) }),
   eliminarCuenta:   () => apiFetch('/auth/me', { method: 'DELETE' }),
 };
-

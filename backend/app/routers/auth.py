@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models, schemas
-import random
 from middleware.auth import hash_password, verify_password, create_access_token, get_current_user
 from typing import Optional
 from pydantic import BaseModel
-from datetime import datetime, timedelta, timezone
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
@@ -15,11 +12,9 @@ router = APIRouter(prefix="/auth", tags=["Autenticación"])
 # ─── POST /auth/register ─────────────────────────────────────────
 @router.post("/register", response_model=schemas.UsuarioResponse, status_code=201)
 def register(datos: schemas.UsuarioCreate, db: Session = Depends(get_db)):
-    # Verificar RUT duplicado
     if db.query(models.Usuario).filter(models.Usuario.rut == datos.rut).first():
         raise HTTPException(status_code=400, detail="El RUT ya está registrado")
 
-    # Verificar email duplicado
     if db.query(models.Usuario).filter(models.Usuario.email == datos.email).first():
         raise HTTPException(status_code=400, detail="El email ya está registrado")
 
@@ -40,9 +35,8 @@ def register(datos: schemas.UsuarioCreate, db: Session = Depends(get_db)):
 
 # ─── POST /auth/login ────────────────────────────────────────────
 @router.post("/login", response_model=schemas.TokenResponse)
-def login(datos: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    
-    usuario = db.query(models.Usuario).filter(models.Usuario.rut == datos.username).first()
+def login(datos: schemas.LoginRequest, db: Session = Depends(get_db)):
+    usuario = db.query(models.Usuario).filter(models.Usuario.rut == datos.rut).first()
 
     if not usuario:
         raise HTTPException(
@@ -50,22 +44,22 @@ def login(datos: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(ge
             detail="RUT o contraseña incorrectos",
         )
 
-    es_contrasena_valida = False
-
+    es_valida = False
     try:
-        es_contrasena_valida = verify_password(datos.password, usuario.password)
-    
+        es_valida = verify_password(datos.password, usuario.password)
     except ValueError:
+        # Contraseña sin hash (usuario antiguo) — hashear al vuelo
         if datos.password == usuario.password:
-            es_contrasena_valida = True
-            usuario.password = hash_password(datos.password) 
+            es_valida = True
+            usuario.password = hash_password(datos.password)
             db.commit()
 
-    if not es_contrasena_valida:
+    if not es_valida:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="RUT o contraseña incorrectos",
         )
+
     token = create_access_token(data={"sub": usuario.rut, "rol": usuario.rol})
 
     return {
@@ -75,11 +69,14 @@ def login(datos: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(ge
         "nombre":       usuario.nombre,
     }
 
+
+# ─── GET /auth/me ────────────────────────────────────────────────
 @router.get("/me", response_model=schemas.UsuarioResponse)
 def get_me(current_user: models.Usuario = Depends(get_current_user)):
     return current_user
 
 
+# ─── PUT /auth/me ────────────────────────────────────────────────
 class UsuarioUpdate(BaseModel):
     email: Optional[str] = None
     comuna: Optional[str] = None
@@ -91,10 +88,9 @@ def update_me(
     db: Session = Depends(get_db),
 ):
     if datos.email:
-        # Verificar que el email no esté en uso por otro usuario
         existe = db.query(models.Usuario).filter(
             models.Usuario.email == datos.email,
-            models.Usuario.rut != current_user.rut
+            models.Usuario.rut != current_user.rut  # usa rut en vez de id
         ).first()
         if existe:
             raise HTTPException(status_code=400, detail="El email ya está en uso")
@@ -105,15 +101,16 @@ def update_me(
     db.refresh(current_user)
     return current_user
 
-#--DELETE Cuenta -- #
+
+# ─── DELETE /auth/me ─────────────────────────────────────────────
 @router.delete("/me", status_code=204)
 def eliminar_mi_cuenta(
     current_user: models.Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Primero eliminar las solicitudes del usuario
+    # Eliminar solicitudes del usuario usando rut en vez de id
     db.query(models.Solicitud).filter(
-        models.Solicitud.usuario_id == current_user.id
+        models.Solicitud.usuario_id == current_user.rut
     ).delete()
     db.delete(current_user)
     db.commit()

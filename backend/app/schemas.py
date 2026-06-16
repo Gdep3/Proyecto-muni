@@ -97,6 +97,7 @@ class GastoResponse(BaseModel):
     class Config:
         from_attributes = True
         orm_mode = True
+
 class GastoCreate(BaseModel):
     año: int
     mes: int
@@ -109,7 +110,8 @@ class GastoUpdate(BaseModel):
     area: Optional[str] = None
     monto: Optional[int] = None
 
-# Documentos
+
+# ─── DOCUMENTOS (CORREGIDO PARA DOBLE ENLACE) ───
 
 class DocumentoResponse(BaseModel):
     id:          int
@@ -119,13 +121,16 @@ class DocumentoResponse(BaseModel):
     area:        Optional[str]
     fecha_pub:   Optional[str]
     descripcion: Optional[str]
-    enlace:      Optional[str]
+    # Reemplazamos 'enlace' por las dos nuevas columnas
+    enlace_contrato: Optional[str] = None
+    enlace_acto:     Optional[str] = None
     año:         Optional[int]
     mes:         Optional[int]
 
     class Config:
         from_attributes = True
         orm_mode = True
+
 class DocumentoCreate(BaseModel):
     codigo: str
     tipo: str
@@ -133,7 +138,9 @@ class DocumentoCreate(BaseModel):
     area: str
     fecha_pub: str
     descripcion: str
-    enlace: str
+    # Ambos enlaces pueden ser opcionales al importar por si alguna celda viene vacía
+    enlace_contrato: Optional[str] = None
+    enlace_acto:     Optional[str] = None
     año: int
     mes: int
 
@@ -144,6 +151,7 @@ class DocumentoUpdate(BaseModel):
     area: Optional[str] = None
     fecha_pub: Optional[str] = None
     descripcion: Optional[str] = None
-    enlace: Optional[str] = None
+    enlace_contrato: Optional[str] = None
+    enlace_acto:     Optional[str] = None
     año: Optional[int] = None
     mes: Optional[int] = None

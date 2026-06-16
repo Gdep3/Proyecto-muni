@@ -33,39 +33,64 @@ import {
 } from 'recharts';
 import { useHistory } from 'react-router-dom';
 import HeaderLinks from '../components/HeaderLink';
+import { gastosService } from '../services/api';
+import { documentosService } from '../services/api';
 
+/*  Constantes  */
+const MESES = [
+  { label: 'Enero', num: 1 }, { label: 'Febrero', num: 2 }, { label: 'Marzo', num: 3 },
+  { label: 'Abril', num: 4 }, { label: 'Junio', num: 6 }, { label: 'Julio', num: 7 },
+  { label: 'Agosto', num: 8 }, { label: 'Septiembre', num: 9 },
+  { label: 'Octubre', num: 10 }, { label: 'Noviembre', num: 11 },
+];
+
+const PIE_COLORS = ['#2a6095', '#1a9cd8', '#4ab8e8', '#3d7abf'];
+
+/*  Helpers  */
+const renderPieLegend = (pieData: any[]) => (
+  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '8px' }}>
+    {pieData.map((entry, i) => (
+      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#444' }}>
+        <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+        {entry.name}
+      </div>
+    ))}
+  </div>
+);
+
+const renderCustomLabel = ({ cx, cy, midAngle, outerRadius, name, value }: any) => {
+  const RADIAN = Math.PI / 180;
+  const radius = outerRadius + 30;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  return (
+    <text x={x} y={y} fill="#444" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11}>
+      <tspan x={x} dy="-0.4em" fontWeight="bold">{name}</tspan>
+      <tspan x={x} dy="1.2em">{value}%</tspan>
+    </text>
+  );
+};
+
+/*  Props  */
 interface InicioPublicoProps {
   userRole?: 'ciudadano' | 'admin' | null;
   isAuth?: boolean;
 }
 
+/*  Componente  */
 const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false }) => {
   const history = useHistory();
 
-  // Estados
   const [selectedYear, setSelectedYear] = useState('2026');
   const [compareYear, setCompareYear]   = useState('Comparar');
-  const [selectedArea, setSelectedArea] = useState('Total');
-  
+  const [selectedArea, setSelectedArea] = useState('Salud');
   const [popoverOpen, setPopoverOpen]   = useState(false);
   const [popoverEvent, setPopoverEvent] = useState<any>(null);
   const [docSeleccionado, setDocSeleccionado] = useState<number | null>(null);
-  
-  const [documentos, setDocumentos]     = useState<any[]>([]);
-  const [cargando, setCargando]         = useState(true);
+  const [cargando, setCargando] = useState(true);
 
-  const años = ['2025', '2026'];
-  const areas = ['Total', 'Salud', 'Educación', 'Obras Públicas'];
-
-  // Datos Sintéticos para Gráficos
-  const datosEvolucion = [
-    { mes: 'Ene', presupuesto: 120, gastado: 100 },
-    { mes: 'Feb', presupuesto: 150, gastado: 130 },
-    { mes: 'Mar', presupuesto: 180, gastado: 165 },
-    { mes: 'Abr', presupuesto: 140, gastado: 125 },
-    { mes: 'May', presupuesto: 160, gastado: 155 },
-    { mes: 'Jun', presupuesto: 190, gastado: 180 },
-  ];
+  const [años, setAños]   = useState<string[]>(['2025', '2026']);
+  const [areas, setAreas] = useState<string[]>(['Total', 'Salud', 'Compras']);
 
   const datosDistribucion = [
     { name: 'Salud', value: 35, color: '#15305b' },
@@ -83,30 +108,93 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
     setPopoverOpen(true);
   };
 
-  //Descarga
-  const simularDescarga = (nombreArchivo: string) => {
-    const contenido = "Este es un documento oficial de prueba de la Municipalidad de Santo Domingo.\n\nGenerado desde el nuevo portal web.";
-    const blob = new Blob([contenido], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const enlace = document.createElement('a');
-    enlace.href = url;
-    enlace.download = nombreArchivo.replace('.pdf', '.txt'); 
-    enlace.click();
-    window.URL.revokeObjectURL(url);
-  };
+  const comparando    = compareYear !== 'Comparar';
+  const tituloGrafico = comparando
+    ? `${selectedArea} ${selectedYear} vs ${compareYear}`
+    : selectedArea;
 
-  /*DOCUMENTOS*/
+  /* ── Cargar barras ── */
   useEffect(() => {
-    setCargando(true);
-    setTimeout(() => {
-      setDocumentos([
-        { id: 1, descripcion: 'Presupuesto Municipal Aprobado 2026.pdf', codigo: 'DOC-001' },
-        { id: 2, descripcion: 'Acta de Concejo Municipal - Marzo 2026.pdf', codigo: 'DOC-002' },
-        { id: 3, descripcion: 'Plan Regulador Comunal Actualizado.pdf', codigo: 'DOC-003' },
-        { id: 4, descripcion: 'Informe de Gastos de Salud - Trimestre 1.pdf', codigo: 'DOC-004' }
-      ]);
-      setCargando(false);
-    }, 600); 
+    const cargar = async () => {
+      try {
+        const area = selectedArea === 'Total' ? undefined : selectedArea;
+        const data1 = await gastosService.listar(Number(selectedYear), area);
+        let data2: any[] = [];
+        if (comparando) {
+          data2 = await gastosService.listar(Number(compareYear), area);
+        }
+        const transformado = MESES.map(({ label, num }) => ({
+          mes:  label,
+          año1: data1.find((d: any) => d.mes === num)?.monto ?? 0,
+          año2: data2.find((d: any) => d.mes === num)?.monto ?? 0,
+        }));
+        setBarData(transformado);
+      } catch {
+        setBarData(MESES.map(({ label }) => ({ mes: label, año1: 0, año2: 0 })));
+      }
+    };
+    cargar();
+  }, [selectedYear, compareYear, selectedArea, version]);
+
+  /*  Cargar pie  */
+  useEffect(() => {
+    const cargar = async () => {
+      try {
+        const data = await gastosService.listar(Number(selectedYear));
+        const porArea: Record<string, number> = {};
+        data.forEach((d: any) => {
+          porArea[d.area] = (porArea[d.area] ?? 0) + d.monto;
+        });
+        const total = Object.values(porArea).reduce((a: number, b) => a + (b as number), 0);
+        setPieData(
+          Object.entries(porArea).map(([name, monto]) => ({
+            name,
+            value: total > 0 ? Math.round(((monto as number) / total) * 1000) / 10 : 0,
+          }))
+        );
+      } catch {
+        setPieData([]);
+      }
+    };
+    cargar();
+  }, [selectedYear, version]);
+
+  /*  filtros  */
+  useEffect(() => {
+    documentosService.filtros()
+      .then(data => {
+        setAños(data.años.map(String));
+        setAreas(['Total', ...data.areas]);
+      })
+      .catch(() => {});
+  }, [version]);
+
+  /*  Documentos  */
+  useEffect(() => {
+    const cargar = async () => {
+      try {
+        const data = await documentosService.listar();
+        setDocumentos(data);
+      } catch {
+        setDocumentos([]);
+      } finally {
+        setCargando(false);
+      }
+    };
+    cargar();
+  }, [version]);
+
+  /*  Notificacion  */
+  useEffect(() => {
+    const verificar = () => {
+      const ultima = localStorage.getItem('ultima_importacion');
+      if (ultima && Number(ultima) > Date.now() - 5000) {
+        setVersion(v => v + 1);
+        localStorage.removeItem('ultima_importacion');
+      }
+    };
+    const intervalo = setInterval(verificar, 1000);
+    return () => clearInterval(intervalo);
   }, []);
 
   const selectStyle: React.CSSProperties = {
@@ -192,9 +280,9 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
           {/* Fila 3: Filtros */}
           <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
             {[
-                { label: 'Año', value: selectedYear, setter: setSelectedYear, options: años.map(a => [a, a]), minWidth: '110px' },
-                { label: 'Comparar con', value: compareYear, setter: setCompareYear, options: [['Comparar','Comparar'], ...años.map(a => [a, a])], minWidth: '150px' },
-                { label: 'Area', value: selectedArea, setter: setSelectedArea, options: areas.map(a => [a, a]), minWidth: '140px' },
+                { label: 'Año',          value: selectedYear, setter: setSelectedYear, options: años.map(a => [a, a]),                                    minWidth: '110px' },
+                { label: 'Comparar con', value: compareYear,  setter: setCompareYear,  options: [['Comparar','Comparar'], ...años.map(a => [a, a])],       minWidth: '150px' },
+                { label: 'Area',         value: selectedArea, setter: setSelectedArea, options: areas.map(a => [a, a]),                                   minWidth: '140px' },
             ].map(({ label, value, setter, options, minWidth }) => (
               <div key={label} style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '13px', marginBottom: '8px', fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}>{label}</span>
@@ -203,6 +291,26 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
                 </IonSelect>
               </div>
             ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
+            <IonButton color="light"
+              onClick={() => {
+                if (isAuth && userRole === 'ciudadano') {
+                  history.push('/app/perfil');
+                } else if (isAuth && userRole === 'admin') {
+                  history.push('/admin/perfil');  // ← faltaba este caso
+                } else {
+                  history.push('/registro');
+                }
+              }}
+              style={{
+                width: '48px', height: '48px', '--border-radius': '50%',
+                '--padding-start': '0', '--padding-end': '0',
+              }}
+            >
+              <IonIcon icon={personOutline} style={{ color: '#15305b', fontSize: '22px' }} />
+            </IonButton>
           </div>
         </div>
 
@@ -252,7 +360,10 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
           {/* Barra de Búsqueda de Archivos */}
           <IonRow className="ion-align-items-center" style={{ marginTop: '28px', marginBottom: '12px' }}>
             <IonCol size="12" sizeMd="5">
-              <IonSearchbar placeholder="Buscar Archivo" style={{ padding: 0, '--border-radius': '30px', '--box-shadow': 'none', '--background': 'white', border: '1px solid #d5d5d5', borderRadius: '30px' }} />
+              <IonSearchbar placeholder="Buscar Archivo" style={{
+                padding: 0, '--border-radius': '30px', '--box-shadow': 'none',
+                '--background': 'white', border: '1px solid #d5d5d5', borderRadius: '30px',
+              }} />
             </IonCol>
             <IonCol size="auto" style={{ display: 'flex', gap: '12px', marginLeft: 'auto', alignItems: 'center' }}>
               <IonButton fill="outline" shape="round" style={{ '--background': 'white', '--color': '#333', '--box-shadow': 'none', '--border-radius': '20px', '--border-color': '#d5d5d5', '--border-width': '1px', height: '42px' }}>
@@ -264,18 +375,33 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
             </IonCol>
           </IonRow>
 
-          {/* Lista de Documentos */}
+          {/* Lista */}
+
           <IonRow>
             <IonCol size="12">
               <IonCard style={{ borderRadius: '16px', margin: '0', border: '1px solid #e0e0e0', boxShadow: 'none' }}>
                 <IonList lines="full" style={{ padding: 0 }}>
                   {documentos.length === 0 ? (
-                    <IonItem><IonLabel style={{ color: '#888' }}>No hay documentos.</IonLabel></IonItem>
+                    <IonItem>
+                      <IonLabel style={{ color: '#888', fontSize: '14px' }}>
+                        No hay documentos disponibles.
+                      </IonLabel>
+                    </IonItem>
                   ) : (
                     documentos.map((doc) => (
-                      <IonItem key={doc.id} button detail={false} style={{ '--padding-start': '24px', '--padding-end': '16px', '--min-height': '58px' }}>
-                        <IonLabel style={{ fontWeight: '500', color: '#2a2a2a' }}>{doc.descripcion}</IonLabel>
-                        <IonIcon slot="end" icon={reorderThreeOutline} style={{ color: '#aaa', fontSize: '22px', cursor: 'pointer' }} onClick={(e) => abrirMenu(e as any, doc.id)} />
+                      <IonItem key={doc.id} button detail={false} style={{
+                        '--padding-start': '24px', '--padding-end': '16px',
+                        '--min-height': '58px', '--border-color': '#ebebeb',
+                      }}>
+                        <IonLabel style={{ fontWeight: '500', color: '#2a2a2a', fontSize: '15px' }}>
+                          {doc.descripcion ?? doc.codigo ?? `Documento ${doc.id}`}
+                        </IonLabel>
+                        <IonIcon
+                          slot="end"
+                          icon={reorderThreeOutline}
+                          style={{ color: '#aaa', fontSize: '22px', cursor: 'pointer' }}
+                          onClick={(e) => { e.stopPropagation(); abrirMenu(e as any, doc.id); }}
+                        />
                       </IonItem>
                     ))
                   )}
@@ -288,7 +414,13 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
         )}
 
         {/* ── MENÚ CONTEXTUAL ── */}
-        <IonPopover isOpen={popoverOpen} event={popoverEvent} onDidDismiss={() => setPopoverOpen(false)} showBackdrop={false} style={{ '--width': '220px', '--border-radius': '14px' }}>
+        <IonPopover
+          isOpen={popoverOpen}
+          event={popoverEvent}
+          onDidDismiss={() => setPopoverOpen(false)}
+          showBackdrop={false}
+          style={{ '--width': '220px', '--border-radius': '14px', '--box-shadow': '0 4px 20px rgba(0,0,0,0.15)' }}
+        >
           <IonList lines="full" style={{ padding: '4px 0' }}>
             <IonItem button detail={false} onClick={() => { 
                 setPopoverOpen(false); 
