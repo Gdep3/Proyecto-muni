@@ -229,30 +229,38 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
           </div>
 
           {/* Fila 2: Botones Rápidos */}
+          {/* Fila 2: Botones Rápidos */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <IonButton
-              onClick={() => isAuth ? history.push('/app/solicitudes/nueva') : history.push('/login')}
-              style={{ '--background': 'rgba(255,255,255,0.1)', '--color': 'white', '--border-radius': '20px', '--border-color': 'rgba(255,255,255,0.3)', '--border-style': 'solid', '--border-width': '1px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: '500', textTransform: 'none' }}
-            >
-              <IonIcon icon={documentTextOutline} slot="start" style={{ fontSize: '16px' }} />
-              Solicitud de Transparencia
-            </IonButton>
-
-            <IonButton
-              style={{ '--background': 'rgba(255,255,255,0.1)', '--color': 'white', '--border-radius': '20px', '--border-color': 'rgba(255,255,255,0.3)', '--border-style': 'solid', '--border-width': '1px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: '500', textTransform: 'none' }}
-            >
-              <IonIcon icon={libraryOutline} slot="start" style={{ fontSize: '16px' }} />
-              importar datos
-            </IonButton>
-
-            {isAuth && userRole === 'admin' && (
+            
+            {/* 1. Visible para CUALQUIER usuario logueado (Ciudadano o Admin) */}
+            {isAuth && (
               <IonButton
-                onClick={() => history.push('/admin/dashboard')}
-                style={{ '--background': '#ffc107', '--color': '#15305b', '--border-radius': '20px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: 'bold', textTransform: 'none' }}
+                onClick={() => history.push('/app/solicitudes/nueva')}
+                style={{ '--background': 'rgba(255,255,255,0.1)', '--color': 'white', '--border-radius': '20px', '--border-color': 'rgba(255,255,255,0.3)', '--border-style': 'solid', '--border-width': '1px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: '500', textTransform: 'none' }}
               >
-                <IonIcon icon={shieldCheckmarkOutline} slot="start" style={{ fontSize: '16px' }} />
-                Volver al panel de administrador
+                <IonIcon icon={documentTextOutline} slot="start" style={{ fontSize: '16px' }} />
+                Solicitud de Transparencia
               </IonButton>
+            )}
+
+            {/* 2. Visible SOLO para Administradores */}
+            {isAuth && userRole === 'admin' && (
+              <>
+                <IonButton
+                  style={{ '--background': 'rgba(255,255,255,0.1)', '--color': 'white', '--border-radius': '20px', '--border-color': 'rgba(255,255,255,0.3)', '--border-style': 'solid', '--border-width': '1px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: '500', textTransform: 'none' }}
+                >
+                  <IonIcon icon={libraryOutline} slot="start" style={{ fontSize: '16px' }} />
+                  Importar datos
+                </IonButton>
+
+                <IonButton
+                  onClick={() => history.push('/admin/dashboard')}
+                  style={{ '--background': '#ffc107', '--color': '#15305b', '--border-radius': '20px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: 'bold', textTransform: 'none' }}
+                >
+                  <IonIcon icon={shieldCheckmarkOutline} slot="start" style={{ fontSize: '16px' }} />
+                  Volver al panel de administrador
+                </IonButton>
+              </>
             )}
           </div>
 
