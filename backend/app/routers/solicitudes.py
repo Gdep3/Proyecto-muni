@@ -21,7 +21,7 @@ def listar_solicitudes(
     if current_user.rol == models.RolEnum.admin:
         return db.query(models.Solicitud).order_by(models.Solicitud.created_at.desc()).all()
     return db.query(models.Solicitud).filter(
-        models.Solicitud.usuario_id == current_user.id
+        models.Solicitud.usuario_id == current_user.rut
     ).order_by(models.Solicitud.created_at.desc()).all()
 
 # ─── GET /solicitudes/{id} ────────────────────────────────────────
@@ -36,7 +36,7 @@ def obtener_solicitud(
     ).first()
     if not solicitud:
         raise HTTPException(status_code=404, detail="Solicitud no encontrada")
-    if current_user.rol == models.RolEnum.ciudadano and solicitud.usuario_id != current_user.id:
+    if current_user.rol == models.RolEnum.ciudadano and solicitud.usuario_id != current_user.rut:
         raise HTTPException(status_code=403, detail="Acceso denegado")
     return solicitud
 
@@ -56,7 +56,7 @@ def crear_solicitud(
         categoria   = datos.categoria,
         asunto      = asunto,
         descripcion = descripcion,
-        usuario_id  = current_user.id,
+        usuario_id  = current_user.rut,
     )
     db.add(nueva)
     db.commit()
@@ -91,7 +91,7 @@ def actualizar_solicitud(
     if (datos.estado == models.EstadoSolicitudEnum.respondida and
         estado_anterior != models.EstadoSolicitudEnum.respondida):
         ciudadano = db.query(models.Usuario).filter(
-            models.Usuario.id == solicitud.usuario_id
+            models.Usuario.rut == solicitud.usuario_id
         ).first()
         if ciudadano:
             enviar_notificacion_respuesta(

@@ -36,19 +36,39 @@ const AdminGestion: React.FC = () => {
   const history = useHistory();
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
   const [cargando, setCargando] = useState(true);
-
-  // ── DATOS SINTÉTICOS DE SOLICITUDES PARA PRUEBAS ──
+// ── CONEXIÓN REAL CON LA BASE DE DATOS ──
   useEffect(() => {
-    setCargando(true);
-    setTimeout(() => {
-      setSolicitudes([
-        { id: 1, folio: 'TRA-2026-001', ciudadano: 'Juan Pérez Silva', fecha: '08/06/2026', extracto: 'Solicita copia de los gastos en luminarias públicas del sector norte.', estado: 'pendiente' },
-        { id: 2, folio: 'TRA-2026-002', ciudadano: 'María Angélica Soto', fecha: '02/06/2026', extracto: 'Solicitud de actas de la comisión de salud sobre planes comunales.', estado: 'respondida' },
-        { id: 3, folio: 'TRA-2026-003', ciudadano: 'Carlos Muñoz Rojas', fecha: '15/05/2026', extracto: 'Pide información sobre decretos de licitación de recolección de residuos.', estado: 'pendiente' },
-        { id: 4, folio: 'TRA-2026-004', ciudadano: 'Patricia Vergara M.', fecha: '10/04/2026', extracto: 'Solicita organigrama de sueldos del personal de la dirección de obras.', estado: 'expirada' },
-      ]);
-      setCargando(false);
-    }, 600);
+    const fetchSolicitudes = async () => {
+      setCargando(true);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:8000/solicitudes/', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Mapeamos los datos de la base de datos al formato de nuestras tarjetas visuales
+          const solicitudesReales = data.map((sol: any) => ({
+            id: sol.id,
+            folio: sol.folio,
+            ciudadano: sol.usuario_id, // Mostraremos el RUT de quien solicitó
+            fecha: new Date(sol.created_at).toLocaleDateString('es-CL'),
+            extracto: sol.asunto,
+            estado: sol.estado
+          }));
+          setSolicitudes(solicitudesReales);
+        }
+      } catch (error) {
+        console.error("Error al cargar solicitudes reales:", error);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    fetchSolicitudes();
   }, []);
 
   // Configuración de colores y etiquetas según el estado de la solicitud chilenas

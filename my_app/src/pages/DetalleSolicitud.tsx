@@ -1,75 +1,84 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  IonPage,
-  IonContent,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonBackButton,
-  IonCard,
-  IonCardContent,
-  IonBadge,
-  IonIcon,
-  IonButton,
-  IonTextarea,
-  IonSpinner,
-  IonToast
+  IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
+  IonCard, IonCardContent, IonBadge, IonIcon, IonTextarea, IonSpinner, IonToast
 } from '@ionic/react';
-import { 
-  personCircleOutline, 
-  calendarOutline, 
-  mailOutline, 
-  documentTextOutline, 
-  sendOutline, 
-  attachOutline,
-  documentAttachOutline // ✨ Ícono para cuando hay un archivo
+import {
+  personCircleOutline, calendarOutline, documentTextOutline, sendOutline,
+  attachOutline, documentAttachOutline, arrowBackOutline, checkmarkCircleOutline
 } from 'ionicons/icons';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useHistory, useLocation } from 'react-router-dom';
 
-interface Solicitud {
+interface SolicitudReal {
   id: number;
   folio: string;
-  ciudadano: string;
-  email: string;
+  ciudadano: string; 
   fecha: string;
-  extracto: string;
+  asunto: string;
+  descripcion: string;
   estado: 'pendiente' | 'respondida' | 'expirada';
-  mensajeCompleto: string;
+  respuesta: string | null;
 }
 
 const DetalleSolicitud: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
-  
-  const [solicitud, setSolicitud] = useState<Solicitud | null>(null);
+  const location = useLocation();
+
+  // 1. Detectamos si es Admin o Ciudadano basándonos en la ruta
+  const esAdmin = location.pathname.includes('/admin');
+  const rutaVolver = esAdmin ? '/admin/gestion' : '/app/solicitudes';
+
+  const [solicitud, setSolicitud] = useState<SolicitudReal | null>(null);
   const [cargando, setCargando] = useState(true);
-  
+
+  // Estados de UI para la respuesta
+  const [respuestaInput, setRespuestaInput] = useState('');
+  const [enviando, setEnviando] = useState(false);
   const [mostrarToast, setMostrarToast] = useState(false);
+  const [toastMsj, setToastMsj] = useState('');
+  const [toastColor, setToastColor] = useState<'success' | 'danger'>('success');
+
   const [nombreArchivo, setNombreArchivo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Simulamos la búsqueda de la solicitud en la base de datos
+  // 2. Cargamos los datos REALES desde la Base de Datos
   useEffect(() => {
-    setCargando(true);
-    setTimeout(() => {
-      const bdSimulada: Solicitud[] = [
-        { 
-          id: 1, folio: 'TRA-2026-001', ciudadano: 'Juan Pérez Silva', email: 'juan.perez@correo.cl', fecha: '08/06/2026', estado: 'pendiente',
-          extracto: 'Solicita copia de los gastos en luminarias públicas del sector norte.',
-          mensajeCompleto: 'Junto con saludar, solicito mediante la Ley de Transparencia el detalle de los gastos incurridos en la instalación y mantención de luminarias públicas en el sector norte de la comuna, específicamente entre las calles Los Aromos y Las Araucarias, durante el periodo de enero a mayo de 2026. Agradecería que se adjunte el decreto de licitación correspondiente.'
-        },
-        { 
-          id: 2, folio: 'TRA-2026-002', ciudadano: 'María Angélica Soto', email: 'msoto@mail.com', fecha: '02/06/2026', estado: 'respondida',
-          extracto: 'Solicitud de actas de la comisión de salud sobre planes comunales.',
-          mensajeCompleto: 'Estimados, requiero copia íntegra de las actas de las sesiones de la Comisión de Salud del Concejo Municipal realizadas durante el mes de marzo de 2026.'
-        }
-      ];
+    const fetchSolicitud = async () => {
+      setCargando(true);
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+        const response = await fetch(`http://localhost:8000/solicitudes/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
 
-      const encontrada = bdSimulada.find(s => s.id === parseInt(id)) || bdSimulada[0];
-      setSolicitud(encontrada);
-      setCargando(false);
-    }, 500);
+        if (response.ok) {
+          const data = await response.json();
+          setSolicitud({
+            id: data.id,
+            folio: data.folio,
+            ciudadano: data.usuario_id, // Usamos el RUT que nos entrega el backend
+            fecha: new Date(data.created_at).toLocaleDateString('es-CL'),
+            asunto: data.asunto,
+            descripcion: data.descripcion,
+            estado: data.estado,
+            respuesta: data.respuesta
+          });
+        } else {
+          setToastMsj('Error al cargar la solicitud');
+          setToastColor('danger');
+          setMostrarToast(true);
+        }
+      } catch (error) {
+        console.error("Error al obtener la solicitud:", error);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    fetchSolicitud();
   }, [id]);
 
   const obtenerBadgeEstado = (estado: string) => {
@@ -78,65 +87,81 @@ const DetalleSolicitud: React.FC = () => {
         return <IonBadge style={{ '--background': '#ffc107', color: '#15305b', padding: '6px 10px', borderRadius: '8px', fontWeight: 'bold' }}>PENDIENTE</IonBadge>;
       case 'respondida':
         return <IonBadge style={{ '--background': '#28a745', color: 'white', padding: '6px 10px', borderRadius: '8px', fontWeight: 'bold' }}>RESPONDIDA</IonBadge>;
-      case 'expirada':
-        return <IonBadge style={{ '--background': '#dc3545', color: 'white', padding: '6px 10px', borderRadius: '8px', fontWeight: 'bold' }}>EXPIRADA</IonBadge>;
       default:
         return null;
     }
   };
 
   const handleAdjuntar = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    if (fileInputRef.current) fileInputRef.current.click();
   };
 
   const handleArchivoSeleccionado = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setNombreArchivo(file.name); 
-    }
+    if (file) setNombreArchivo(file.name);
   };
 
-  const handleEnviar = () => {
-    setMostrarToast(true);
-    
-    setTimeout(() => {
-      history.push('/admin/gestion');
-    }, 2000);
+  // 3. Función del Admin para mandar la respuesta real al backend
+  const handleEnviarRespuesta = async () => {
+    if (!respuestaInput.trim()) {
+      setToastMsj('La respuesta oficial no puede estar vacía.');
+      setToastColor('danger');
+      setMostrarToast(true);
+      return;
+    }
+
+    setEnviando(true);
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+      // Usamos el endpoint PUT que definimos en solicitudes.py
+      const response = await fetch(`http://localhost:8000/solicitudes/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          estado: 'respondida',
+          respuesta: respuestaInput
+        })
+      });
+
+      if (response.ok) {
+        setToastMsj('¡Respuesta oficial enviada al ciudadano!');
+        setToastColor('success');
+        setMostrarToast(true);
+        setTimeout(() => history.push(rutaVolver), 2000);
+      } else {
+        throw new Error('Error al enviar la respuesta');
+      }
+    } catch (error) {
+      setToastMsj('Ocurrió un error al enviar la respuesta.');
+      setToastColor('danger');
+      setMostrarToast(true);
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
         <IonToolbar style={{ '--background': '#15305b', '--color': 'white', paddingTop: '8px', paddingBottom: '8px' }}>
-          
           <IonButtons slot="start" style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', gap: '4px' }}>
-            <IonBackButton defaultHref="/admin/gestion" style={{ color: 'white' }} />
+            <IonButton style={{ color: 'white', '--padding-start': '0', '--padding-end': '8px' }} onClick={() => history.push(rutaVolver)}>
+              <IonIcon slot="icon-only" icon={arrowBackOutline} style={{ fontSize: '24px' }} />
+            </IonButton>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <img 
-                src="/SantoDomingoIcono.png" 
-                alt="Logo" 
-                style={{ width: '36px', height: '36px', objectFit: 'contain', filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.2))' }} 
-              />
+              <img src="/SantoDomingoIcono.png" alt="Logo" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '9px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', lineHeight: '1.2' }}>
-                  Municipalidad de
-                </span>
-                <span style={{ color: '#ffffff', fontSize: '13px', fontWeight: 'bold', lineHeight: '1.1' }}>
-                  Santo Domingo
-                </span>
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '9px', fontWeight: '600', textTransform: 'uppercase' }}>Municipalidad de</span>
+                <span style={{ color: '#ffffff', fontSize: '13px', fontWeight: 'bold' }}>Santo Domingo</span>
               </div>
             </div>
           </IonButtons>
-
-          <IonTitle style={{ 
-            position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', 
-            fontWeight: 'bold', fontSize: '16px', width: 'auto', zIndex: 10, padding: 0, margin: 0 
-          }}>
+          <IonTitle style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', fontWeight: 'bold', fontSize: '16px' }}>
             Detalle Solicitud
           </IonTitle>
-
         </IonToolbar>
       </IonHeader>
 
@@ -146,9 +171,9 @@ const DetalleSolicitud: React.FC = () => {
             <IonSpinner name="crescent" style={{ color: '#1a9cd8' }} />
           </div>
         ) : (
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            
-            {/* Tarjeta 1: Datos */}
+          <div style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '40px' }}>
+
+            {/* Tarjeta 1: Datos Generales */}
             <IonCard style={{ borderRadius: '16px', margin: '10px 0 20px 0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
               <div style={{ backgroundColor: '#f8f9fa', borderBottom: '1px solid #e9ecef', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -157,21 +182,14 @@ const DetalleSolicitud: React.FC = () => {
                 </div>
                 {obtenerBadgeEstado(solicitud.estado)}
               </div>
-              
+
               <IonCardContent style={{ padding: '20px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <IonIcon icon={personCircleOutline} style={{ fontSize: '20px', color: '#666', marginTop: '2px' }} />
                     <div>
-                      <span style={{ display: 'block', fontSize: '12px', color: '#888', fontWeight: '600', textTransform: 'uppercase' }}>Solicitante</span>
+                      <span style={{ display: 'block', fontSize: '12px', color: '#888', fontWeight: '600', textTransform: 'uppercase' }}>RUT Solicitante</span>
                       <span style={{ color: '#333', fontWeight: '500' }}>{solicitud.ciudadano}</span>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <IonIcon icon={mailOutline} style={{ fontSize: '20px', color: '#666', marginTop: '2px' }} />
-                    <div>
-                      <span style={{ display: 'block', fontSize: '12px', color: '#888', fontWeight: '600', textTransform: 'uppercase' }}>Correo Electrónico</span>
-                      <span style={{ color: '#333', fontWeight: '500' }}>{solicitud.email}</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
@@ -185,44 +203,63 @@ const DetalleSolicitud: React.FC = () => {
               </IonCardContent>
             </IonCard>
 
-            {/* Tarjeta 2: Mensaje */}
+            {/* Tarjeta 2: Requerimiento Original */}
             <IonCard style={{ borderRadius: '16px', margin: '0 0 20px 0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
               <IonCardContent style={{ padding: '24px' }}>
-                <h3 style={{ margin: '0 0 16px 0', color: '#15305b', fontWeight: 'bold', fontSize: '16px' }}>
-                  Detalle del Requerimiento
+                <h3 style={{ margin: '0 0 8px 0', color: '#15305b', fontWeight: 'bold', fontSize: '16px' }}>
+                  Asunto: {solicitud.asunto}
                 </h3>
-                <div style={{ backgroundColor: '#f0f4f8', padding: '20px', borderRadius: '12px', borderLeft: '4px solid #1a9cd8' }}>
+                <div style={{ backgroundColor: '#f0f4f8', padding: '20px', borderRadius: '12px', borderLeft: '4px solid #1a9cd8', marginTop: '16px' }}>
                   <p style={{ margin: 0, color: '#444', fontSize: '15px', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                    {solicitud.mensajeCompleto}
+                    {solicitud.descripcion}
                   </p>
                 </div>
               </IonCardContent>
             </IonCard>
 
-            {/* Tarjeta 3: Redactar Respuesta */}
-            {solicitud.estado === 'pendiente' && (
-              <IonCard style={{ borderRadius: '16px', margin: '0 0 40px 0', border: '1px solid #1a9cd8', boxShadow: 'none' }}>
+            {/* Tarjeta 3: Respuesta Oficial (Si ya fue respondida, visible para AMBOS) */}
+            {solicitud.estado === 'respondida' && solicitud.respuesta && (
+              <IonCard style={{ borderRadius: '16px', margin: '0 0 20px 0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #28a745' }}>
+                <IonCardContent style={{ padding: '24px' }}>
+                  <h3 style={{ margin: '0 0 16px 0', color: '#28a745', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: '20px' }} />
+                    Respuesta Oficial de la Municipalidad
+                  </h3>
+                  <div style={{ backgroundColor: '#f8fff9', padding: '20px', borderRadius: '12px' }}>
+                    <p style={{ margin: 0, color: '#333', fontSize: '15px', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                      {solicitud.respuesta}
+                    </p>
+                  </div>
+                </IonCardContent>
+              </IonCard>
+            )}
+
+            {/* Tarjeta 4: Redactar Respuesta (SOLO visible para ADMIN si está pendiente) */}
+            {esAdmin && solicitud.estado === 'pendiente' && (
+              <IonCard style={{ borderRadius: '16px', margin: '0', border: '1px solid #1a9cd8', boxShadow: 'none' }}>
                 <IonCardContent style={{ padding: '24px' }}>
                   <h3 style={{ margin: '0 0 16px 0', color: '#15305b', fontWeight: 'bold', fontSize: '16px' }}>
                     Redactar Respuesta Oficial
                   </h3>
-                  
-                  <IonTextarea 
-                    placeholder="Escriba la respuesta oficial para el ciudadano aquí..." 
+
+                  <IonTextarea
+                    placeholder="Escriba la respuesta oficial para el ciudadano aquí..."
                     rows={6}
+                    value={respuestaInput}
+                    onIonInput={e => setRespuestaInput(e.detail.value!)}
                     style={{ backgroundColor: '#fff', border: '1px solid #d5d5d5', borderRadius: '12px', padding: '12px', color: '#333' }}
                   />
 
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    style={{ display: 'none' }} 
-                    onChange={handleArchivoSeleccionado} 
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleArchivoSeleccionado}
                   />
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', flexWrap: 'wrap', gap: '10px' }}>
-                    <IonButton 
-                      fill="outline" 
+                    <IonButton
+                      fill="outline"
                       onClick={handleAdjuntar}
                       style={{ '--color': nombreArchivo ? '#1a9cd8' : '#15305b', '--border-color': nombreArchivo ? '#1a9cd8' : '#d5d5d5', '--border-radius': '10px', textTransform: 'none' }}
                     >
@@ -230,27 +267,26 @@ const DetalleSolicitud: React.FC = () => {
                       {nombreArchivo ? nombreArchivo : 'Adjuntar Documentos'}
                     </IonButton>
 
-                    <IonButton 
-                      onClick={handleEnviar}
+                    <IonButton
+                      onClick={handleEnviarRespuesta}
+                      disabled={enviando}
                       style={{ '--background': '#28a745', '--color': 'white', '--border-radius': '10px', textTransform: 'none', fontWeight: 'bold' }}
                     >
-                      <IonIcon icon={sendOutline} slot="start" />
-                      Enviar Respuesta
+                      {enviando ? <IonSpinner name="crescent" /> : <><IonIcon icon={sendOutline} slot="start" /> Enviar Respuesta</>}
                     </IonButton>
                   </div>
                 </IonCardContent>
               </IonCard>
             )}
-
           </div>
         )}
+
         <IonToast
           isOpen={mostrarToast}
           onDidDismiss={() => setMostrarToast(false)}
-          message="¡Respuesta enviada exitosamente al ciudadano!"
-          duration={2000}
-          color="success"
-          icon={sendOutline}
+          message={toastMsj}
+          duration={3000}
+          color={toastColor}
           position="bottom"
           style={{ fontWeight: 'bold', textAlign: 'center' }}
         />
