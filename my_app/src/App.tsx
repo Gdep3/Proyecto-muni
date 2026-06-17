@@ -44,7 +44,7 @@ setupIonicReact();
 const App: React.FC = () => {
   const [isAuth, setIsAuth]     = useState(authService.isAuth());
   const [userRole, setUserRole] = useState<'ciudadano' | 'admin'>(
-    authService.getRol() ?? 'ciudadano'
+    authService.getRol() === 'admin' ? 'admin' : 'ciudadano'
   );
 
   const handleLogout = () => {
