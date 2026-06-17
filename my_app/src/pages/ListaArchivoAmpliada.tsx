@@ -23,7 +23,6 @@ import {
   contractOutline,
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import HeaderLinks from '../components/HeaderLink';
 import { documentosService } from '../services/api';
 
 const ListaArchivoAmpliada: React.FC = () => {
@@ -99,7 +98,6 @@ const ListaArchivoAmpliada: React.FC = () => {
 
   return (
     <IonPage>
-      <HeaderLinks />
 
       <IonContent style={{ '--background': '#f0f2f5' }}>
 

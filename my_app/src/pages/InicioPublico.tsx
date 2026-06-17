@@ -238,13 +238,6 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
               Solicitud de Transparencia
             </IonButton>
 
-            <IonButton
-              style={{ '--background': 'rgba(255,255,255,0.1)', '--color': 'white', '--border-radius': '20px', '--border-color': 'rgba(255,255,255,0.3)', '--border-style': 'solid', '--border-width': '1px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: '500', textTransform: 'none' }}
-            >
-              <IonIcon icon={libraryOutline} slot="start" style={{ fontSize: '16px' }} />
-              importar datos
-            </IonButton>
-
             {isAuth && userRole === 'admin' && (
               <IonButton
                 onClick={() => history.push('/admin/dashboard')}

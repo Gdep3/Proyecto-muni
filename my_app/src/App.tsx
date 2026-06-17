@@ -26,6 +26,7 @@ import DetalleSolicitud from './pages/DetalleSolicitud';
 import AdminGestionDetalle from './pages/AdminGestionDetalle';
 
 import PrivateRoute from './routes/PrivateRoute';
+import BotonAccesibilidad from './components/HeaderLink';
 
 import '@ionic/react/css/core.css';
 import '@ionic/react/css/normalize.css';
@@ -42,9 +43,8 @@ setupIonicReact();
 
 const App: React.FC = () => {
   const [isAuth, setIsAuth]     = useState(authService.isAuth());
-  const initialRole = authService.getRol();
   const [userRole, setUserRole] = useState<'ciudadano' | 'admin'>(
-    initialRole === 'admin' ? 'admin' : 'ciudadano'
+    authService.getRol() ?? 'ciudadano'
   );
 
   const handleLogout = () => {
@@ -55,6 +55,7 @@ const App: React.FC = () => {
 
   return (
     <IonApp>
+      <BotonAccesibilidad />
       <IonReactRouter>
         <IonRouterOutlet animated={false}>
 
@@ -107,13 +108,6 @@ const App: React.FC = () => {
          <PrivateRoute
             exact path="/admin/perfil"
             render={() => <AppPerfil onLogout={handleLogout} backRoute="/admin/dashboard" />}
-            isAuthenticated={isAuth}
-            requiredRole="admin"
-            userRole={userRole}
-          />
-          <PrivateRoute
-            exact path="/admin/solicitud/:id"
-            component={DetalleSolicitud}
             isAuthenticated={isAuth}
             requiredRole="admin"
             userRole={userRole}
