@@ -38,10 +38,10 @@ interface AppPerfilProps {
 const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout, backRoute = '/app/inicio' }) => {
   const history = useHistory();
   const [usuario, setUsuario] = useState<any>(null);
-  const [email, setEmail]     = useState('');
-  const [comuna, setComuna]   = useState('');
+  const [email, setEmail] = useState('');
+  const [comuna, setComuna] = useState('');
   const [guardando, setGuardando] = useState(false);
-  const [mensaje, setMensaje]     = useState('');
+  const [mensaje, setMensaje] = useState('');
 
   const handleGuardar = async () => {
     setGuardando(true);
@@ -64,13 +64,13 @@ const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout, backRoute = '/app/inici
         setEmail(data.email);
         setComuna(data.comuna ?? '');
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
-  
+
   return (
     <IonPage>
       {/* ── BARRA SUPERIOR ── */}
-      <HeaderLinks/>
+      <HeaderLinks />
 
       <IonContent style={{ '--background': '#f0f2f5' }}>
 
@@ -81,9 +81,11 @@ const AppPerfil: React.FC<AppPerfilProps> = ({ onLogout, backRoute = '/app/inici
           alignItems: 'flex-start', borderBottomRightRadius: '80px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <IonButton fill="clear" onClick={() => history.push(backRoute)}
-              style={{ '--padding-start': '0', '--padding-end': '8px', '--color': 'rgba(255,255,255,0.8)' }}>
-              <IonIcon icon={arrowBackOutline} style={{ fontSize: '20px' }} />
+            <IonButton
+              style={{ color: 'white', '--padding-start': '0', '--padding-end': '8px' }}
+              onClick={() => history.goBack()}
+            >
+              <IonIcon slot="icon-only" icon={arrowBackOutline} style={{ fontSize: '24px' }} />
             </IonButton>
             <div>
               <h2 style={{ margin: 0, fontWeight: '700', fontSize: '20px' }}>Mi Perfil</h2>

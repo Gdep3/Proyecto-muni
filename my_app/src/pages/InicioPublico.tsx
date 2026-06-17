@@ -258,13 +258,6 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
             {isAuth && userRole === 'admin' && (
               <>
                 <IonButton
-                  style={{ '--background': 'rgba(255,255,255,0.1)', '--color': 'white', '--border-radius': '20px', '--border-color': 'rgba(255,255,255,0.3)', '--border-style': 'solid', '--border-width': '1px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: '500', textTransform: 'none' }}
-                >
-                  <IonIcon icon={libraryOutline} slot="start" style={{ fontSize: '16px' }} />
-                  Importar datos
-                </IonButton>
-
-                <IonButton
                   onClick={() => history.push('/admin/dashboard')}
                   style={{ '--background': '#ffc107', '--color': '#15305b', '--border-radius': '20px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: 'bold', textTransform: 'none' }}
                 >
@@ -307,8 +300,6 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
                 <IonCard style={{ borderRadius: '16px', boxShadow: '0 4px 14px rgba(0,0,0,0.08)', margin: '0', height: '100%' }}>
                   <div style={{ padding: '16px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ margin: 0, fontWeight: '700', color: '#1a1a2e', fontSize: '15px' }}>{tituloGrafico}</h3>
-                    <IonIcon icon={expandOutline} style={{ cursor: 'pointer', color: '#999', fontSize: '20px' }}
-                      onClick={() => history.push('/grafico-ampliado')} />
                   </div>
                   <div style={{ height: '350px', padding: '8px' }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -335,8 +326,6 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
                     <h3 style={{ margin: 0, fontWeight: '700', color: '#1a1a2e', fontSize: '15px' }}>
                       Distribución por Área — {selectedYear}
                     </h3>
-                    <IonIcon icon={expandOutline} style={{ cursor: 'pointer', color: '#999', fontSize: '20px' }}
-                      onClick={() => history.push(`/grafico-pie-ampliado?año=${selectedYear}`)} />
                   </div>
                   <div style={{ height: '350px', padding: '8px' }}>
                     {pieData.length > 0 ? (
@@ -370,9 +359,6 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
                 />
               </IonCol>
               <IonCol size="auto" style={{ display: 'flex', gap: '12px', marginLeft: 'auto', alignItems: 'center' }}>
-                <IonButton fill="outline" shape="round" style={{ '--background': 'white', '--color': '#333', '--box-shadow': 'none', '--border-radius': '20px', '--border-color': '#d5d5d5', '--border-width': '1px', height: '42px' }}>
-                  Mes <IonIcon slot="end" icon={calendarOutline} style={{ color: '#555' }} />
-                </IonButton>
                 <IonButton fill="outline" shape="round" onClick={() => documentosService.descargarTodos()} style={{ '--background': 'white', '--border-color': '#d5d5d5', '--border-width': '1px', '--padding-start': '0', '--padding-end': '0', width: '44px', height: '44px' }}>
                   <IonIcon slot="icon-only" icon={downloadOutline} style={{ color: '#555' }} />
                 </IonButton>

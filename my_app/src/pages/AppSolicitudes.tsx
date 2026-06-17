@@ -91,15 +91,7 @@ const AppSolicitudes: React.FC = () => {
             );
           })}
         </div>
-
-        {/* Botón Flotante (Con la ruta corregida) */}
-        <IonFab vertical="bottom" horizontal="end" slot="fixed" style={{ margin: '20px' }}>
-          <IonFabButton onClick={() => history.push('/app/nueva-solicitud')}
-            style={{ '--background': '#006FB3' }}>
-            <IonIcon icon={add} />
-          </IonFabButton>
-        </IonFab>
-      </IonContent>
+      </IonContent>s
     </IonPage>
   );
 };

@@ -16,7 +16,7 @@ import {
   IonIcon,
   IonToast
 } from '@ionic/react';
-import { shieldCheckmarkOutline, personOutline } from 'ionicons/icons';
+import { shieldCheckmarkOutline, personOutline, arrowBackOutline } from 'ionicons/icons';
 import { usuariosService } from '../services/api';
 
 interface Usuario {
@@ -53,15 +53,37 @@ const AdminUsuario: React.FC = () => {
   }, []);
 
   // Función que usa nuestra ruta segura para cambiar roles
-  const cambiarRol = async (rut: string, rolActual: string) => {
-    const nuevoRol = rolActual === 'admin' ? 'ciudadano' : 'admin';
+  const handleCambiarRol = async (rutUsuario: string, nuevoRol: string) => {
     try {
-      await usuariosService.cambiarRol(rut, nuevoRol);
-      setMensaje(`Rol de ${rut} actualizado a ${nuevoRol.toUpperCase()} exitosamente.`);
-      cargarUsuarios();
+      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+      
+      const payload = { rol: nuevoRol.toLowerCase() };
+      
+      const response = await fetch(`http://localhost:8000/usuarios/${rutUsuario}/rol`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("🚨 Error:", errorData);
+        throw new Error('El servidor rechazó el cambio');
+      }
+
+      setUsuarios(usuariosActuales => 
+        usuariosActuales.map(u => 
+          u.rut === rutUsuario ? { ...u, rol: nuevoRol.toLowerCase() } : u
+        )
+      );
+
+      console.log("¡Rol actualizado con éxito!");
+      
     } catch (error) {
-      console.error("Error al cambiar rol:", error);
-      setMensaje('Error: No tienes permisos para hacer esto o el servidor falló.');
+      console.error("Falla en la petición:", error);
     }
   };
 
@@ -69,9 +91,12 @@ const AdminUsuario: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border">
         <IonToolbar style={{ '--background': '#15305b', '--color': 'white' }}>
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/admin/dashboard" style={{ color: 'white' }} />
-          </IonButtons>
+          <IonButton 
+            style={{ color: 'white', '--padding-start': '0', '--padding-end': '8px' }} 
+            onClick={() => window.history.back()}
+        >
+          <IonIcon slot="icon-only" icon={arrowBackOutline} style={{ fontSize: '24px' }} />
+          </IonButton>
           <IonTitle style={{ fontWeight: 'bold' }}>Gestión de Usuarios</IonTitle>
         </IonToolbar>
       </IonHeader>
@@ -136,7 +161,7 @@ const AdminUsuario: React.FC = () => {
                     <IonButton 
                       size="small" 
                       fill="outline" 
-                      onClick={() => cambiarRol(user.rut, user.rol)}
+                      onClick={() => handleCambiarRol(user.rut, user.rol === 'admin' ? 'ciudadano' : 'admin')}
                       style={{
                         '--color': user.rol === 'admin' ? '#dc3545' : '#28a745',
                         '--border-color': user.rol === 'admin' ? '#dc3545' : '#28a745',
