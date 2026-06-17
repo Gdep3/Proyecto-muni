@@ -9,6 +9,7 @@ import {
   downloadOutline, expandOutline, personOutline, calendarOutline,
   reorderThreeOutline, informationCircleOutline, chevronForwardOutline,
   documentTextOutline, libraryOutline, shieldCheckmarkOutline,
+  folderOutline,
 } from 'ionicons/icons';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -17,6 +18,7 @@ import {
 import { useHistory } from 'react-router-dom';
 import HeaderLinks from '../components/HeaderLink';
 import { gastosService, documentosService } from '../services/api';
+
 
 /* ── Constantes ── */
 const MESES = [
@@ -229,17 +231,26 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
           </div>
 
           {/* Fila 2: Botones Rápidos */}
-          {/* Fila 2: Botones Rápidos */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             
-            {/* 1. Visible para CUALQUIER usuario logueado (Ciudadano o Admin) */}
+            {/* 1. Visible para CUALQUIER usuario logueado */}
             {isAuth && (
               <IonButton
-                onClick={() => history.push('/app/solicitudes/nueva')}
+                onClick={() => history.push('/app/nueva-solicitud')}
                 style={{ '--background': 'rgba(255,255,255,0.1)', '--color': 'white', '--border-radius': '20px', '--border-color': 'rgba(255,255,255,0.3)', '--border-style': 'solid', '--border-width': '1px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: '500', textTransform: 'none' }}
               >
                 <IonIcon icon={documentTextOutline} slot="start" style={{ fontSize: '16px' }} />
                 Solicitud de Transparencia
+              </IonButton>
+            )}
+
+            {isAuth && userRole === 'ciudadano' && (
+              <IonButton
+                onClick={() => history.push('/app/inicio')}
+                style={{ '--background': '#ffc107', '--color': '#15305b', '--border-radius': '20px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: 'bold', textTransform: 'none' }}
+              >
+                <IonIcon icon={folderOutline} slot="start" style={{ fontSize: '16px' }} />
+                Ir a mi Panel
               </IonButton>
             )}
 
@@ -258,7 +269,7 @@ const InicioPublico: React.FC<InicioPublicoProps> = ({ userRole, isAuth = false 
                   style={{ '--background': '#ffc107', '--color': '#15305b', '--border-radius': '20px', '--box-shadow': 'none', height: '36px', fontSize: '13px', fontWeight: 'bold', textTransform: 'none' }}
                 >
                   <IonIcon icon={shieldCheckmarkOutline} slot="start" style={{ fontSize: '16px' }} />
-                  Volver al panel de administrador
+                  Volver al panel
                 </IonButton>
               </>
             )}

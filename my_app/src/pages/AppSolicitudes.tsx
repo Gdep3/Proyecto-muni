@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  IonPage, IonHeader, IonToolbar, IonContent, IonButton, IonIcon,
+  IonPage, IonContent, IonButton, IonIcon,
   IonFab, IonFabButton, IonSpinner,
 } from '@ionic/react';
 import { personOutline, arrowBackOutline, add, arrowForwardOutline } from 'ionicons/icons';
@@ -27,25 +27,11 @@ const AppSolicitudes: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar style={{ '--background': '#15305b' }}>
-          <div style={{
-            display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
-            gap: '28px', padding: '10px 30px', fontSize: '13px', color: '#ffffff',
-            borderBottom: '1px solid rgba(255,255,255,0.15)',
-          }}>
-            <span style={{ cursor: 'pointer' }}>Plataforma Ley Lobby</span>
-            <span style={{ cursor: 'pointer' }}>Transparencia Activa</span>
-            <span style={{ cursor: 'pointer' }}>Solicitud Ley de Transparencia</span>
-            <span style={{ cursor: 'pointer' }}>Decretos</span>
-            <span style={{ color: '#f1c40f', fontWeight: 'bold', cursor: 'pointer' }}>Consejo Municipal en VIVO</span>
-          </div>
-        </IonToolbar>
-      </IonHeader>
-
       <IonContent style={{ '--background': '#f0f2f5' }}>
+        
+        {/* Sección superior redondeada - Sin el header antiguo */}
         <div style={{
-          backgroundColor: '#15305b', padding: '28px 30px 100px 30px', color: 'white',
+          backgroundColor: '#15305b', padding: '40px 30px 100px 30px', color: 'white',
           display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
           borderBottomRightRadius: '80px',
         }}>
@@ -66,6 +52,7 @@ const AppSolicitudes: React.FC = () => {
           </IonButton>
         </div>
 
+        {/* Tarjetas de Solicitudes */}
         <div style={{ marginTop: '-70px', padding: '0 24px 100px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {loading && <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><IonSpinner name="crescent" /></div>}
           {error && <div style={{ backgroundColor: '#f8d7da', borderRadius: '12px', padding: '16px', color: '#842029' }}>{error}</div>}
@@ -105,8 +92,9 @@ const AppSolicitudes: React.FC = () => {
           })}
         </div>
 
+        {/* Botón Flotante (Con la ruta corregida) */}
         <IonFab vertical="bottom" horizontal="end" slot="fixed" style={{ margin: '20px' }}>
-          <IonFabButton onClick={() => history.push('/app/solicitudes/nueva')}
+          <IonFabButton onClick={() => history.push('/app/nueva-solicitud')}
             style={{ '--background': '#006FB3' }}>
             <IonIcon icon={add} />
           </IonFabButton>

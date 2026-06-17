@@ -77,7 +77,7 @@ const App: React.FC = () => {
           <PrivateRoute exact path="/app/solicitudes"
             component={AppSolicitudes}
             isAuthenticated={isAuth} requiredRole="ciudadano" userRole={userRole} />
-          <PrivateRoute exact path="/app/solicitudes/nueva"
+          <PrivateRoute exact path="/app/nueva-solicitud"
             component={AppNuevaSolicitud}
             isAuthenticated={isAuth} requiredRole="ciudadano" userRole={userRole} />
           <PrivateRoute exact path="/app/solicitudes/:id"
