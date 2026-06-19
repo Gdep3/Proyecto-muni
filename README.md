@@ -1,3 +1,4 @@
+
 # Ingenieria-web-y-movil
 
 ### Integrantes
@@ -25,8 +26,9 @@ Este proyecto es una plataforma integral diseñada para la Municipalidad de Sant
 * Uvicorn (Servidor ASGI)
 * JWT (JSON Web Tokens para autenticación)
 
-**Base de Datos:**
-* MySQL (Desplegada en la nube)
+**Base de Datos y Virtualización:**
+* MySQL (Base de datos relacional)
+* Docker Desktop (Contenedorización nativa de la BD)
 * PyMySQL (Driver de conexión)
 
 ---
@@ -47,39 +49,50 @@ Durante el desarrollo, se tomaron las siguientes decisiones arquitectónicas par
 
 Para levantar este proyecto en un entorno de desarrollo, sigue estos pasos:
 
-### 1. Configuración de la Base de Datos (.env)
-En la carpeta `backend`, crea un archivo `.env` y configura la cadena de conexión a la nube:
+### 1. Configuración de la Base de Datos (Docker y .env)
+Asegúrate de tener iniciado **Docker Desktop** y el contenedor de la base de datos MySQL corriendo de forma nativa. 
+
+Luego, en la carpeta `backend`, crea un archivo `.env` y configura la cadena de conexión apuntando a tu entorno local:
+
 ```
-DATABASE_URL=mysql+pymysql://usuario:contraseña@host.com:3306/nombre_db
+
+DATABASE_URL=mysql+pymysql://usuario:contraseña@localhost:3306/nombre_db
+
 ```
-2. Levantar el Backend (FastAPI)
-Abre una terminal en la carpeta backend y ejecuta:
+
+### 2. Levantar el Backend (FastAPI)
+Abre una terminal en la carpeta `backend` y ejecuta:
+
 ```
+
 pip install -r requirements.txt
-```
-```
+
 python -m uvicorn app.main:app --reload
+
 ```
-El backend deberia estar levantado despues de eso.
-3. Levantar el Frontend (React)
-Abre una nueva terminal en la carpeta my_app y ejecuta:
+El backend debería estar levantado después de eso.
+
+### 3. Levantar el Frontend (React)
+Abre una nueva terminal en la carpeta `my_app` y ejecuta:
+
 ```
+
 npm install
-```
-```
+
 npm run dev
+
 ```
-El frontend estara disponible despues de eso.
+El frontend estará disponible después de eso.
 
 ---
 
 ## Arquitectura del Backend y Base de Datos
 
-El proyecto utiliza una arquitectura de cliente-servidor separada. El frontend (`my_app`) consume los servicios de una API RESTful (`backend`) desarrollada en Node.js utilizando Express y TypeScript. Todos los datos, incluyendo la autenticación de ciudadanos y administradores, se almacenan de forma segura en una base de datos relacional **MySQL** alojada en la nube mediante **Clever Cloud**.
+El proyecto utiliza una arquitectura de cliente-servidor separada. El frontend (`my_app`) consume los servicios de una API RESTful (`backend`) desarrollada en Python utilizando FastAPI. Todos los datos, incluyendo la autenticación de ciudadanos y administradores, se almacenan en una base de datos relacional **MySQL** levantada de manera nativa en un entorno local a través de **Docker Desktop**.
 
 ### Estructura del Repositorio
 * `/my_app`: Contiene la interfaz de usuario desarrollada con Ionic, React y Vite.
-* `/backend`: Contiene la lógica del servidor, los endpoints de la API (`index.ts`) y la conexión directa a la base de datos remota.
+* `/backend`: Contiene la lógica del servidor, los endpoints de la API (`main.py`) y la conexión directa a la base de datos en el contenedor local.
 
 Diagrama de la base de datos
 
@@ -87,12 +100,13 @@ Diagrama de la base de datos
 
 
 ## Roles y credenciales 
-El sistema divide la experiencia en dos grandes areas:
-* Ciudadano (app/incio): Puede ver la informacion municipal, solicitar requerimientos y ver el historial de sus solicitudes.
-* Administrador (/admin/dashboard): Tiene accceso a KIPs, subida de archivos CSV para la actualizacion masiva de bases de datos, y gestion de cuentas
+El sistema divide la experiencia en dos grandes áreas:
+* Ciudadano (/app/inicio): Puede ver la información municipal, solicitar requerimientos y ver el historial de sus solicitudes.
+* Administrador (/admin/dashboard): Tiene acceso a KPIs, subida de archivos CSV para la actualización masiva de bases de datos, y gestión de cuentas
 
 ## Troubleshoot 
-* Error 401 Unauthorized al hacer login: Verifica que las contraseñas en la base de datos esten correctamente hasheadas (encriptadas). FastAPI rechazará contraseñas en texto plano.
-* Error value is not a valid dict: Asegúrate de que las librerías fastapi y pydantic estén actualizadas en tu entorno virtual.
+* Error 401 Unauthorized al hacer login: Verifica que las contraseñas en la base de datos estén correctamente hasheadas (encriptadas). FastAPI rechazará contraseñas en texto plano.
+* Error value is not a valid dict: Asegúrate de que las librerías fastapi y pydantic estén actualizada en tu entorno virtual.
 * Pantalla en Blanco/Negro en React: Ocurre si el Token JWT expira y el navegador entra en un bucle de redirección. Borra el almacenamiento local (F12 > Application > Local Storage) y recarga la página (F5).
 
+```
